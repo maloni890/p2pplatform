@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChainSwap — P2P USDT Trading",
+  title: "SwapEase — Buy & Sell USDT | INR Directly in Your Bank",
   description:
-    "Buy and sell USDT peer-to-peer with 10+ payment methods. Fast, secure, and non-custodial.",
-  keywords: ["USDT", "P2P trading", "crypto", "buy USDT", "sell USDT", "decentralized"],
+    "India's fastest P2P USDT trading platform. Buy and sell USDT directly with INR. Instant payout, 100% secure, zero fees, best rates.",
+  keywords: ["USDT", "P2P trading", "crypto", "buy USDT", "sell USDT", "INR", "India", "instant payout"],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0A",
+  themeColor: "#1a7a4a",
   width: "device-width",
   initialScale: 1,
 };

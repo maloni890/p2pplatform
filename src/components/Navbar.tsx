@@ -60,10 +60,10 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0" data-testid="nav-logo">
-            <div className="size-8 rounded-lg bg-primary flex items-center justify-center glow-teal">
+            <div className="size-8 rounded-lg bg-primary flex items-center justify-center glow-green">
               <ArrowRightLeft className="size-4 text-primary-foreground" />
             </div>
-            <span className="font-black text-[17px] tracking-tight text-foreground">ChainSwap</span>
+            <span className="font-black text-[17px] tracking-tight text-foreground">SwapEase</span>
           </Link>
 
           {/* Desktop nav links */}
@@ -169,7 +169,7 @@ export default function Navbar() {
                 <Link href="/login" className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-login">
                   Sign In
                 </Link>
-                <Link href="/register" className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity glow-teal" data-testid="nav-register">
+                <Link href="/register" className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity glow-green" data-testid="nav-register">
                   Get Started
                 </Link>
               </div>
