@@ -54,112 +54,122 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ── SwapEase — Premium P2P USDT Exchange ──────────────────────── */
-/* Light theme with green primary #1a7a4a */
+/* ── DTBranch — Premium P2P USDT Exchange ──────────────────────── */
+/* Dark purple/blue theme */
 :root {
-  /* Background scale - white/light theme */
-  --background:   #ffffff;
-  --card:         #f8faf9;
-  --surface:      #f0f5f2;
-  --popover:      #ffffff;
+  /* Background scale - dark purple theme */
+  --background:   #0d0d1a;
+  --card:         #13131f;
+  --surface:      #1a1a2c;
+  --popover:      #13131f;
 
   /* Foreground */
-  --foreground:         #0f1f17;
-  --card-foreground:    #0f1f17;
-  --surface-foreground: #0f1f17;
-  --popover-foreground: #0f1f17;
-  --muted-foreground:   #5a6b62;
+  --foreground:         #ffffff;
+  --card-foreground:    #ffffff;
+  --surface-foreground: #ffffff;
+  --popover-foreground: #ffffff;
+  --muted-foreground:   #7777aa;
 
-  /* Primary — forest green #1a7a4a */
-  --primary:            #1a7a4a;
+  /* Primary — blue #4d7cfe */
+  --primary:            #4d7cfe;
   --primary-foreground: #ffffff;
 
   /* Secondary & muted */
-  --secondary:            #e8f0eb;
-  --secondary-foreground: #0f1f17;
-  --muted:                #e8f0eb;
-  --accent:               #e8f0eb;
-  --accent-foreground:    #0f1f17;
+  --secondary:            #1a1a2c;
+  --secondary-foreground: #ffffff;
+  --muted:                #1a1a2c;
+  --accent:               #1a1a2c;
+  --accent-foreground:    #ffffff;
 
   /* Status */
-  --success:             #10B981;
+  --success:             #22c55e;
   --success-foreground:  #ffffff;
-  --destructive:         #dc2626;
+  --destructive:         #ef4444;
   --destructive-foreground: #ffffff;
 
   /* Borders & inputs */
-  --border: #e2e8e5;
-  --input:  #e2e8e5;
-  --ring:   #1a7a4a;
+  --border: rgba(255, 255, 255, 0.07);
+  --input:  #252540;
+  --ring:   #4d7cfe;
 
   /* Brand alias = primary */
-  --brand:            #1a7a4a;
+  --brand:            #4d7cfe;
   --brand-foreground: #ffffff;
 
   /* Charts */
-  --chart-1: #1a7a4a;
-  --chart-2: #10B981;
-  --chart-3: #34d399;
-  --chart-4: #dc2626;
-  --chart-5: #6366f1;
+  --chart-1: #4d7cfe;
+  --chart-2: #22c55e;
+  --chart-3: #8b5cf6;
+  --chart-4: #ef4444;
+  --chart-5: #f59e0b;
 
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  --sidebar:                    #f8faf9;
-  --sidebar-foreground:         #0f1f17;
-  --sidebar-primary:            #1a7a4a;
+  --sidebar:                    #13131f;
+  --sidebar-foreground:         #ffffff;
+  --sidebar-primary:            #4d7cfe;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent:             #e8f0eb;
-  --sidebar-accent-foreground:  #0f1f17;
-  --sidebar-border:             #e2e8e5;
-  --sidebar-ring:               #1a7a4a;
+  --sidebar-accent:             #1a1a2c;
+  --sidebar-accent-foreground:  #ffffff;
+  --sidebar-border:             rgba(255, 255, 255, 0.07);
+  --sidebar-ring:               #4d7cfe;
 }
 
+/* Dark mode is same as default in this theme */
 .dark {
-  --background:   #0a0f0c;
-  --card:         #0f1612;
-  --surface:      #151d18;
-  --popover:      #0f1612;
-  --foreground:         #f0f5f2;
-  --card-foreground:    #f0f5f2;
-  --surface-foreground: #f0f5f2;
-  --popover-foreground: #f0f5f2;
-  --muted-foreground:   #7a8a82;
-  --primary:            #22c55e;
-  --primary-foreground: #0a0f0c;
-  --secondary:            #1a2420;
-  --secondary-foreground: #f0f5f2;
-  --muted:                #1a2420;
-  --accent:               #1a2420;
-  --accent-foreground:    #f0f5f2;
+  --background:   #0d0d1a;
+  --card:         #13131f;
+  --surface:      #1a1a2c;
+  --popover:      #13131f;
+  --foreground:         #ffffff;
+  --card-foreground:    #ffffff;
+  --surface-foreground: #ffffff;
+  --popover-foreground: #ffffff;
+  --muted-foreground:   #7777aa;
+  --primary:            #4d7cfe;
+  --primary-foreground: #ffffff;
+  --secondary:            #1a1a2c;
+  --secondary-foreground: #ffffff;
+  --muted:                #1a1a2c;
+  --accent:               #1a1a2c;
+  --accent-foreground:    #ffffff;
   --success:             #22c55e;
-  --success-foreground:  #0a0f0c;
+  --success-foreground:  #ffffff;
   --destructive:         #ef4444;
   --destructive-foreground: #ffffff;
-  --border: rgba(255,255,255,0.08);
-  --input:  rgba(255,255,255,0.1);
-  --ring:   #22c55e;
-  --brand:            #22c55e;
-  --brand-foreground: #0a0f0c;
-  --chart-1: #22c55e;
-  --chart-2: #10B981;
-  --chart-3: #34d399;
+  --border: rgba(255, 255, 255, 0.07);
+  --input:  #252540;
+  --ring:   #4d7cfe;
+  --brand:            #4d7cfe;
+  --brand-foreground: #ffffff;
+  --chart-1: #4d7cfe;
+  --chart-2: #22c55e;
+  --chart-3: #8b5cf6;
   --chart-4: #ef4444;
-  --chart-5: #6366f1;
-  --sidebar:                    #0f1612;
-  --sidebar-foreground:         #f0f5f2;
-  --sidebar-primary:            #22c55e;
-  --sidebar-primary-foreground: #0a0f0c;
-  --sidebar-accent:             #1a2420;
-  --sidebar-accent-foreground:  #f0f5f2;
-  --sidebar-border:             rgba(255,255,255,0.08);
-  --sidebar-ring:               #22c55e;
+  --chart-5: #f59e0b;
+  --sidebar:                    #13131f;
+  --sidebar-foreground:         #ffffff;
+  --sidebar-primary:            #4d7cfe;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent:             #1a1a2c;
+  --sidebar-accent-foreground:  #ffffff;
+  --sidebar-border:             rgba(255, 255, 255, 0.07);
+  --sidebar-ring:               #4d7cfe;
 }
 
 @layer base {
   * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground font-sans antialiased; }
-  html { @apply bg-background; }
+  body { 
+    @apply text-foreground font-sans antialiased;
+    background: radial-gradient(ellipse at top left, #1a0828 0%, transparent 50%),
+                radial-gradient(ellipse at top right, #0a1020 0%, transparent 50%),
+                radial-gradient(ellipse at bottom center, #0d0d1a 0%, #0d0d1a 100%);
+    background-color: #0d0d1a;
+    min-height: 100vh;
+  }
+  html { 
+    @apply bg-[#0d0d1a]; 
+  }
 }
 
 @layer utilities {
@@ -168,21 +178,104 @@
   .bg-brand     { background-color: var(--brand); }
   .bg-success   { background-color: var(--success); }
 
-  /* Green glow — used on primary CTA and active states */
-  .glow-green {
-    box-shadow: 0 0 20px rgba(26, 122, 74, 0.3),
-                0 0 40px rgba(26, 122, 74, 0.15);
+  /* Gradient background with bokeh effect */
+  .bg-gradient-dark {
+    background: radial-gradient(ellipse at top left, #1a0828 0%, transparent 50%),
+                radial-gradient(ellipse at top right, #0a1020 0%, transparent 50%),
+                radial-gradient(ellipse at bottom center, #0d0d1a 0%, #0d0d1a 100%);
+    background-color: #0d0d1a;
   }
 
-  /* Subtle inner border highlight */
-  .card-highlight {
-    border-color: rgba(26, 122, 74, 0.15);
-    background: linear-gradient(135deg, #f8faf9 0%, #ffffff 100%);
+  /* Corner glow effects */
+  .glow-corner-tl {
+    position: relative;
+  }
+  .glow-corner-tl::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .glow-corner-br {
+    position: relative;
+  }
+  .glow-corner-br::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(77, 124, 254, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Blue glow — used on primary CTA and active states */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(77, 124, 254, 0.3),
+                0 0 40px rgba(77, 124, 254, 0.15);
+  }
+
+  /* Card style */
+  .card-dark {
+    background-color: #13131f;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1rem;
+  }
+
+  /* Input style */
+  .input-dark {
+    background-color: #1a1a2c;
+    border: 1px solid #252540;
+    color: #ffffff;
+  }
+
+  .input-dark::placeholder {
+    color: #7777aa;
+  }
+
+  .input-dark:focus {
+    border-color: #4d7cfe;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(77, 124, 254, 0.2);
+  }
+
+  /* Pill button */
+  .btn-pill {
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .btn-pill-primary {
+    background-color: #4d7cfe;
+    color: #ffffff;
+  }
+
+  .btn-pill-primary:hover {
+    background-color: #5d8cff;
+  }
+
+  .btn-pill-outline {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+  }
+
+  .btn-pill-outline:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.5);
   }
 
   /* Table row hover */
   .table-row-hover:hover {
-    background-color: rgba(26, 122, 74, 0.04);
+    background-color: rgba(77, 124, 254, 0.05);
   }
 
   /* Stat number font */
@@ -195,11 +288,11 @@
   .gradient-animate {
     background: linear-gradient(
       135deg,
-      #1a7a4a 0%,
-      #22c55e 25%,
-      #10B981 50%,
-      #1a7a4a 75%,
-      #22c55e 100%
+      #4d7cfe 0%,
+      #8b5cf6 25%,
+      #4d7cfe 50%,
+      #6366f1 75%,
+      #4d7cfe 100%
     );
     background-size: 400% 400%;
     animation: gradient-shift 8s ease infinite;
@@ -212,11 +305,11 @@
   }
 
   /* Pulse animation for live indicator */
-  .pulse-green {
-    animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .pulse-blue {
+    animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  @keyframes pulse-green {
+  @keyframes pulse-blue {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
   }
@@ -257,18 +350,49 @@
     transform: translateY(0);
   }
 
-  /* Live trades marquee */
-  .trades-scroll {
-    animation: scroll-trades 30s linear infinite;
+  /* Feature scroll animation */
+  .features-scroll {
+    animation: scroll-features 20s linear infinite;
   }
 
-  @keyframes scroll-trades {
+  @keyframes scroll-features {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
   }
 
-  /* Ticker animation */
+  /* Particle animation */
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(77, 124, 254, 0.3);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+  }
+
+  /* Mobile optimization */
+  .mobile-max-w {
+    max-width: 390px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    height: 56px;
+    background: rgba(19, 19, 31, 0.95);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Ticker glow */
   .ticker-glow {
-    text-shadow: 0 0 10px rgba(26, 122, 74, 0.5);
+    text-shadow: 0 0 10px rgba(77, 124, 254, 0.5);
   }
 }
