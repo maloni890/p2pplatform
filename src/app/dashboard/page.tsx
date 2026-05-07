@@ -203,9 +203,32 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 py-8 w-full" data-testid="dashboard-page">
-        <h1 className="font-sans text-3xl font-bold text-foreground mb-6">
-          Dashboard
-        </h1>
+        {/* Header with Member Badge */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <h1 className="font-sans text-3xl font-bold text-foreground">
+              Dashboard
+            </h1>
+            {user && (
+              <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full border border-primary/20">
+                Member
+              </span>
+            )}
+          </div>
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-foreground">
+                  {user.name || user.username}
+                </p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                {(user.name || user.username || "U").charAt(0).toUpperCase()}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Tabs */}
         <div

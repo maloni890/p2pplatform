@@ -29,7 +29,9 @@ function makeDemoUser(data: RegisterData): User & { password: string } {
   return {
     id: `demo_${Date.now()}`,
     username: data.username,
+    name: data.name || data.username,
     email: data.email,
+    phone: data.phone || "",
     password: data.password,
     role: "user",
     wallet_address: data.wallet_address || "",
@@ -37,37 +39,55 @@ function makeDemoUser(data: RegisterData): User & { password: string } {
     completed_trades: 0,
     total_trades: 0,
     is_verified_trader: false,
+    is_phone_verified: false,
+    is_email_verified: false,
+    referral_code: data.referral_code,
+    my_referral_code: generateReferralCode(),
     created_at: new Date().toISOString(),
   };
+}
+
+function generateReferralCode(): string {
+  return "SE" + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 export interface User {
   id: string;
   username: string;
+  name?: string;
   email: string;
+  phone?: string;
   role: "user" | "admin";
   wallet_address?: string;
   completion_rate?: number;
   completed_trades?: number;
   total_trades?: number;
   is_verified_trader?: boolean;
+  is_phone_verified?: boolean;
+  is_email_verified?: boolean;
+  referral_code?: string;
+  my_referral_code?: string;
   created_at?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (identifier: string, password: string) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  verifyPhone: (phone: string, otp: string) => Promise<boolean>;
 }
 
 interface RegisterData {
   username: string;
+  name?: string;
   email: string;
+  phone?: string;
   password: string;
   wallet_address?: string;
+  referral_code?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -122,13 +142,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (identifier: string, password: string): Promise<User> => {
     if (IS_DEMO) {
       const users = getDemoUsers();
+      // Match by email or phone
       const match = Object.values(users).find(
-        (u) => u.email === email && u.password === password
+        (u) => (u.email === identifier || u.phone === identifier) && u.password === password
       );
-      if (!match) throw new Error("Invalid email or password");
+      if (!match) throw new Error("Invalid credentials");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _pw, ...safeUser } = match;
       setUser(safeUser);
@@ -138,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const res = await axios.post(
       `${API_BASE}/api/auth/login`,
-      { email, password },
+      { email: identifier, password },
       { withCredentials: true }
     );
     if (res.data.token && typeof window !== "undefined")
@@ -154,12 +175,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const usernameExists = Object.values(users).some(
         (u) => u.username === data.username
       );
+      const phoneExists = data.phone && Object.values(users).some((u) => u.phone === data.phone);
+      
       if (emailExists) throw Object.assign(new Error(), {
         response: { data: { detail: "An account with this email already exists" } },
       });
       if (usernameExists) throw Object.assign(new Error(), {
         response: { data: { detail: "Username already taken" } },
       });
+      if (phoneExists) throw Object.assign(new Error(), {
+        response: { data: { detail: "Phone number already registered" } },
+      });
+      
       const newUser = makeDemoUser(data);
       users[newUser.id] = newUser;
       saveDemoUsers(users);
@@ -177,6 +204,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", res.data.token);
     setUser(res.data);
     return res.data;
+  };
+
+  const verifyPhone = async (phone: string, otp: string): Promise<boolean> => {
+    if (IS_DEMO) {
+      // In demo mode, always succeed with any 6-digit OTP
+      if (otp.length === 6 && user) {
+        const updatedUser = { ...user, is_phone_verified: true };
+        setUser(updatedUser);
+        if (typeof window !== "undefined")
+          localStorage.setItem("demo_current_user", JSON.stringify(updatedUser));
+        
+        // Update in demo users store
+        const users = getDemoUsers();
+        if (users[user.id]) {
+          users[user.id] = { ...users[user.id], is_phone_verified: true };
+          saveDemoUsers(users);
+        }
+        return true;
+      }
+      return false;
+    }
+    try {
+      await axios.post(`${API_BASE}/api/auth/verify-phone`, { phone, otp }, {
+        withCredentials: true,
+      });
+      // Refresh user data
+      await checkAuth();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const logout = async () => {
@@ -199,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, checkAuth }}
+      value={{ user, loading, login, register, logout, checkAuth, verifyPhone }}
     >
       {children}
     </AuthContext.Provider>
