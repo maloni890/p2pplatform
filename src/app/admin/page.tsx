@@ -26,6 +26,8 @@ import {
   Loader2,
   Copy,
   ExternalLink,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 
 // Types
@@ -118,12 +120,38 @@ interface Rates {
   max_trade_amount: number;
 }
 
+interface SupportTicket {
+  id: string;
+  ticket_number: string;
+  user_name: string;
+  user_email: string;
+  user_phone: string;
+  subject: string;
+  category: string;
+  message: string;
+  order_id: string | null;
+  status: string;
+  priority: string;
+  admin_reply: string | null;
+  replied_at: string | null;
+  created_at: string;
+}
+
+interface SupportCounts {
+  open_count: number;
+  in_progress_count: number;
+  resolved_count: number;
+  urgent_count: number;
+  total_count: number;
+}
+
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Orders", icon: ShoppingCart },
   { id: "users", label: "Users", icon: Users },
   { id: "kyc", label: "KYC Requests", icon: Shield },
   { id: "sellers", label: "Sellers", icon: UserCheck },
+  { id: "support", label: "Support", icon: MessageSquare },
   { id: "rates", label: "Rate Settings", icon: DollarSign },
 ];
 
@@ -154,12 +182,16 @@ export default function AdminDashboard() {
   const [kycApplications, setKycApplications] = useState<KycApplication[]>([]);
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [rates, setRates] = useState<Rates | null>(null);
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
+  const [supportCounts, setSupportCounts] = useState<SupportCounts | null>(null);
 
   // Filter states
   const [orderFilter, setOrderFilter] = useState({ status: "all", type: "all" });
   const [userSearch, setUserSearch] = useState("");
   const [kycFilter, setKycFilter] = useState("pending");
   const [sellerFilter, setSellerFilter] = useState("all");
+  const [supportFilter, setSupportFilter] = useState({ status: "all", category: "all" });
+  const [supportSearch, setSupportSearch] = useState("");
 
   // Pagination
   const [orderPage, setOrderPage] = useState(1);
@@ -167,6 +199,9 @@ export default function AdminDashboard() {
   // Modals
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedKyc, setSelectedKyc] = useState<KycApplication | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
 
   // Rate editing
   const [editRates, setEditRates] = useState({
@@ -242,13 +277,22 @@ export default function AdminDashboard() {
             });
           }
           break;
+
+        case "support":
+          const supportRes = await fetch(`/api/admin/support?status=${supportFilter.status}&category=${supportFilter.category}&search=${supportSearch}`);
+          const supportData = await supportRes.json();
+          if (supportData.success) {
+            setSupportTickets(supportData.tickets);
+            setSupportCounts(supportData.counts);
+          }
+          break;
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, activeTab, orderFilter, orderPage, userSearch, kycFilter, sellerFilter]);
+  }, [isAuthenticated, activeTab, orderFilter, orderPage, userSearch, kycFilter, sellerFilter, supportFilter, supportSearch]);
 
   useEffect(() => {
     fetchData();
@@ -351,6 +395,58 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleTicketReply = async () => {
+    if (!selectedTicket || !replyText.trim()) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch("/api/admin/support", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketId: selectedTicket.id,
+          adminReply: replyText,
+          status: "in_progress",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReplyText("");
+        setSelectedTicket(null);
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Reply failed:", error);
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  const handleTicketStatusChange = async (ticketId: string, status: string) => {
+    try {
+      const res = await fetch("/api/admin/support", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId, status }),
+      });
+      const data = await res.json();
+      if (data.success) fetchData();
+    } catch (error) {
+      console.error("Status update failed:", error);
+    }
+  };
+
+  const getCategoryLabel = (cat: string) => {
+    const labels: Record<string, string> = {
+      payment_issue: "Payment Issue",
+      trade_problem: "Trade Problem",
+      kyc_verification: "KYC Verification",
+      account: "Account Issue",
+      urgent: "Urgent",
+      other: "Other",
+    };
+    return labels[cat] || cat;
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
       day: "2-digit",
@@ -412,6 +508,11 @@ export default function AdminDashboard() {
               {tab.id === "kyc" && stats?.pendingKyc ? (
                 <span className="ml-auto px-1.5 py-0.5 bg-red-500 text-white text-[10px] rounded-full">
                   {stats.pendingKyc}
+                </span>
+              ) : null}
+              {tab.id === "support" && supportCounts?.open_count ? (
+                <span className="ml-auto px-1.5 py-0.5 bg-amber-500 text-white text-[10px] rounded-full">
+                  {supportCounts.open_count}
                 </span>
               ) : null}
             </button>
@@ -897,6 +998,253 @@ export default function AdminDashboard() {
                         No sellers found
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* Support Tab */}
+              {activeTab === "support" && (
+                <div className="space-y-4">
+                  {/* Support Stats */}
+                  {supportCounts && (
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="bg-card border border-border rounded-lg p-3">
+                        <p className="text-[10px] text-muted-foreground">Open</p>
+                        <p className="text-xl font-bold text-amber-400">{supportCounts.open_count}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-3">
+                        <p className="text-[10px] text-muted-foreground">In Progress</p>
+                        <p className="text-xl font-bold text-blue-400">{supportCounts.in_progress_count}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-3">
+                        <p className="text-[10px] text-muted-foreground">Resolved</p>
+                        <p className="text-xl font-bold text-green-400">{supportCounts.resolved_count}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-3">
+                        <p className="text-[10px] text-muted-foreground">Urgent</p>
+                        <p className="text-xl font-bold text-red-400">{supportCounts.urgent_count}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-3">
+                        <p className="text-[10px] text-muted-foreground">Total</p>
+                        <p className="text-xl font-bold text-white">{supportCounts.total_count}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Filters */}
+                  <div className="flex flex-wrap gap-2">
+                    <select
+                      value={supportFilter.status}
+                      onChange={(e) => setSupportFilter({ ...supportFilter, status: e.target.value })}
+                      className="px-3 py-2 bg-surface border border-border rounded-lg text-[12px] text-white"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="open">Open</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                    <select
+                      value={supportFilter.category}
+                      onChange={(e) => setSupportFilter({ ...supportFilter, category: e.target.value })}
+                      className="px-3 py-2 bg-surface border border-border rounded-lg text-[12px] text-white"
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="payment_issue">Payment Issue</option>
+                      <option value="trade_problem">Trade Problem</option>
+                      <option value="kyc_verification">KYC Verification</option>
+                      <option value="account">Account</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <div className="relative flex-1 max-w-xs">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={supportSearch}
+                        onChange={(e) => setSupportSearch(e.target.value)}
+                        placeholder="Search tickets..."
+                        className="w-full pl-9 pr-3 py-2 bg-surface border border-border rounded-lg text-[12px] text-white placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tickets Table */}
+                  <div className="bg-card border border-border rounded-xl overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-surface border-b border-border">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Ticket</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">User</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Subject</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Category</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Status</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Date</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {supportTickets.map((ticket) => (
+                          <tr key={ticket.id} className="hover:bg-surface/50">
+                            <td className="px-4 py-3">
+                              <p className="text-[11px] font-medium text-white">{ticket.ticket_number}</p>
+                              {ticket.priority === "high" && (
+                                <span className="px-1.5 py-0.5 bg-red-500/15 text-red-400 text-[8px] rounded">URGENT</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-[11px] text-white">{ticket.user_name || "Guest"}</p>
+                              <p className="text-[10px] text-muted-foreground">{ticket.user_email}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-[11px] text-white max-w-[200px] truncate">{ticket.subject}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-0.5 bg-surface text-[10px] text-muted-foreground rounded">
+                                {getCategoryLabel(ticket.category)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-0.5 text-[10px] rounded ${
+                                ticket.status === "open" ? "bg-amber-500/15 text-amber-400" :
+                                ticket.status === "in_progress" ? "bg-blue-500/15 text-blue-400" :
+                                ticket.status === "resolved" ? "bg-green-500/15 text-green-400" :
+                                "bg-gray-500/15 text-gray-400"
+                              }`}>
+                                {ticket.status.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-[11px] text-muted-foreground">
+                              {formatDate(ticket.created_at)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => setSelectedTicket(ticket)}
+                                className="px-2 py-1 bg-primary/15 text-primary text-[10px] rounded hover:bg-primary/25"
+                              >
+                                View / Reply
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {supportTickets.length === 0 && (
+                      <div className="py-12 text-center text-muted-foreground text-[13px]">
+                        No support tickets found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Ticket Detail Modal */}
+              {selectedTicket && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <div className="bg-card border border-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="p-4 border-b border-border flex items-center justify-between">
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">{selectedTicket.ticket_number}</p>
+                        <h3 className="text-[15px] font-semibold text-white">{selectedTicket.subject}</h3>
+                      </div>
+                      <button onClick={() => setSelectedTicket(null)} className="p-1 hover:bg-surface rounded">
+                        <X className="size-5 text-muted-foreground" />
+                      </button>
+                    </div>
+                    
+                    <div className="p-4 space-y-4">
+                      {/* User Info */}
+                      <div className="bg-surface rounded-lg p-3">
+                        <p className="text-[10px] text-muted-foreground mb-2">From</p>
+                        <p className="text-[12px] text-white font-medium">{selectedTicket.user_name || "Guest"}</p>
+                        <p className="text-[11px] text-muted-foreground">{selectedTicket.user_email}</p>
+                        {selectedTicket.user_phone && (
+                          <p className="text-[11px] text-muted-foreground">{selectedTicket.user_phone}</p>
+                        )}
+                      </div>
+
+                      {/* Ticket Details */}
+                      <div className="flex gap-2 flex-wrap">
+                        <span className={`px-2 py-1 text-[10px] rounded ${
+                          selectedTicket.status === "open" ? "bg-amber-500/15 text-amber-400" :
+                          selectedTicket.status === "in_progress" ? "bg-blue-500/15 text-blue-400" :
+                          selectedTicket.status === "resolved" ? "bg-green-500/15 text-green-400" :
+                          "bg-gray-500/15 text-gray-400"
+                        }`}>
+                          {selectedTicket.status.replace("_", " ")}
+                        </span>
+                        <span className="px-2 py-1 bg-surface text-[10px] text-muted-foreground rounded">
+                          {getCategoryLabel(selectedTicket.category)}
+                        </span>
+                        {selectedTicket.priority === "high" && (
+                          <span className="px-2 py-1 bg-red-500/15 text-red-400 text-[10px] rounded">URGENT</span>
+                        )}
+                        {selectedTicket.order_id && (
+                          <span className="px-2 py-1 bg-primary/15 text-primary text-[10px] rounded">
+                            Order: {selectedTicket.order_id}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Message */}
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Message</p>
+                        <div className="bg-surface rounded-lg p-3">
+                          <p className="text-[12px] text-white whitespace-pre-wrap">{selectedTicket.message}</p>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">{formatDate(selectedTicket.created_at)}</p>
+                      </div>
+
+                      {/* Previous Reply */}
+                      {selectedTicket.admin_reply && (
+                        <div>
+                          <p className="text-[10px] text-muted-foreground mb-1">Your Previous Reply</p>
+                          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                            <p className="text-[12px] text-white whitespace-pre-wrap">{selectedTicket.admin_reply}</p>
+                          </div>
+                          {selectedTicket.replied_at && (
+                            <p className="text-[10px] text-muted-foreground mt-1">{formatDate(selectedTicket.replied_at)}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Reply Form */}
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Reply</p>
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          rows={4}
+                          className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-[12px] text-white placeholder:text-muted-foreground resize-none"
+                          placeholder="Type your reply..."
+                        />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleTicketReply}
+                          disabled={sendingReply || !replyText.trim()}
+                          className="flex-1 py-2 bg-primary text-white text-[12px] font-medium rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {sendingReply ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                          Send Reply
+                        </button>
+                        {selectedTicket.status !== "resolved" && (
+                          <button
+                            onClick={() => {
+                              handleTicketStatusChange(selectedTicket.id, "resolved");
+                              setSelectedTicket(null);
+                            }}
+                            className="px-4 py-2 bg-green-500/15 text-green-400 text-[12px] font-medium rounded-lg flex items-center gap-2"
+                          >
+                            <CheckCircle2 className="size-4" />
+                            Resolve
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

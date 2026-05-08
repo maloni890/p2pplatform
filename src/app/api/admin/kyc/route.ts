@@ -11,30 +11,31 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = (page - 1) * limit;
 
-    let query = `
-      SELECT 
-        k.*,
-        u.name as user_name,
-        u.email as user_email
-      FROM seller_kyc k
-      LEFT JOIN users u ON k.user_id = u.id
-      WHERE 1=1
-    `;
+    let kycApplications;
+    let totalCount;
 
     if (status !== "all") {
-      query += ` AND k.status = '${status}'`;
+      kycApplications = await sql`
+        SELECT k.*, u.name as user_name, u.email as user_email
+        FROM seller_kyc k
+        LEFT JOIN users u ON k.user_id = u.id
+        WHERE k.status = ${status}
+        ORDER BY k.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM seller_kyc WHERE status = ${status}`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else {
+      kycApplications = await sql`
+        SELECT k.*, u.name as user_name, u.email as user_email
+        FROM seller_kyc k
+        LEFT JOIN users u ON k.user_id = u.id
+        ORDER BY k.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM seller_kyc`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
     }
-
-    query += ` ORDER BY k.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
-
-    const kycApplications = await sql(query);
-
-    // Get total count
-    let countQuery = `SELECT COUNT(*) as count FROM seller_kyc WHERE 1=1`;
-    if (status !== "all") countQuery += ` AND status = '${status}'`;
-    
-    const countResult = await sql(countQuery);
-    const totalCount = parseInt(countResult[0]?.count || "0");
 
     return NextResponse.json({
       success: true,
@@ -66,25 +67,25 @@ export async function PATCH(request: NextRequest) {
       await sql`
         UPDATE seller_kyc 
         SET status = 'approved', 
-            reviewed_by = ${adminId || null},
+            reviewed_by = ${adminId || null}::uuid,
             reviewed_at = NOW(),
             updated_at = NOW()
-        WHERE id = ${kycId}
+        WHERE id = ${kycId}::uuid
       `;
 
       // Get user_id from KYC application
-      const kycResult = await sql`SELECT user_id, full_name, upi_id, usdt_wallet_address, usdt_network FROM seller_kyc WHERE id = ${kycId}`;
+      const kycResult = await sql`SELECT user_id, full_name, upi_id, usdt_wallet_address, usdt_network FROM seller_kyc WHERE id = ${kycId}::uuid`;
       
       if (kycResult.length > 0) {
         const kyc = kycResult[0];
         
         // Update user to be a seller
-        await sql`UPDATE users SET is_seller = true, is_verified = true, updated_at = NOW() WHERE id = ${kyc.user_id}`;
+        await sql`UPDATE users SET is_seller = true, is_verified = true, updated_at = NOW() WHERE id = ${kyc.user_id}::uuid`;
         
         // Create seller record
         await sql`
           INSERT INTO sellers (user_id, name, is_verified, available_usdt, rate, upi_id, completion_rate, avg_response_time, wallet_address, network)
-          VALUES (${kyc.user_id}, ${kyc.full_name}, true, 0, 106.35, ${kyc.upi_id}, 100, 5, ${kyc.usdt_wallet_address}, ${kyc.usdt_network})
+          VALUES (${kyc.user_id}::uuid, ${kyc.full_name}, true, 0, 106.35, ${kyc.upi_id}, 100, 5, ${kyc.usdt_wallet_address}, ${kyc.usdt_network})
           ON CONFLICT (user_id) DO UPDATE SET is_verified = true, updated_at = NOW()
         `;
       }
@@ -93,10 +94,10 @@ export async function PATCH(request: NextRequest) {
         UPDATE seller_kyc 
         SET status = 'rejected', 
             rejection_reason = ${rejectionReason || 'Application rejected'},
-            reviewed_by = ${adminId || null},
+            reviewed_by = ${adminId || null}::uuid,
             reviewed_at = NOW(),
             updated_at = NOW()
-        WHERE id = ${kycId}
+        WHERE id = ${kycId}::uuid
       `;
     }
 

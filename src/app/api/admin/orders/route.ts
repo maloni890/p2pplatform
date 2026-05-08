@@ -12,34 +12,54 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = (page - 1) * limit;
 
-    let query = `
-      SELECT 
-        o.*,
-        s.name as seller_name,
-        s.upi_id as seller_upi
-      FROM orders o
-      LEFT JOIN sellers s ON o.seller_id = s.id
-      WHERE 1=1
-    `;
+    // Use different queries based on filters
+    let orders;
+    let totalCount;
 
-    if (status !== "all") {
-      query += ` AND o.status = '${status}'`;
+    if (status !== "all" && type !== "all") {
+      orders = await sql`
+        SELECT o.*, s.name as seller_name, s.upi_id as seller_upi
+        FROM orders o
+        LEFT JOIN sellers s ON o.seller_id = s.id
+        WHERE o.status = ${status} AND o.type = ${type}
+        ORDER BY o.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM orders WHERE status = ${status} AND type = ${type}`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (status !== "all") {
+      orders = await sql`
+        SELECT o.*, s.name as seller_name, s.upi_id as seller_upi
+        FROM orders o
+        LEFT JOIN sellers s ON o.seller_id = s.id
+        WHERE o.status = ${status}
+        ORDER BY o.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM orders WHERE status = ${status}`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (type !== "all") {
+      orders = await sql`
+        SELECT o.*, s.name as seller_name, s.upi_id as seller_upi
+        FROM orders o
+        LEFT JOIN sellers s ON o.seller_id = s.id
+        WHERE o.type = ${type}
+        ORDER BY o.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM orders WHERE type = ${type}`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else {
+      orders = await sql`
+        SELECT o.*, s.name as seller_name, s.upi_id as seller_upi
+        FROM orders o
+        LEFT JOIN sellers s ON o.seller_id = s.id
+        ORDER BY o.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM orders`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
     }
-    if (type !== "all") {
-      query += ` AND o.type = '${type}'`;
-    }
-
-    query += ` ORDER BY o.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
-
-    const orders = await sql(query);
-
-    // Get total count for pagination
-    let countQuery = `SELECT COUNT(*) as count FROM orders WHERE 1=1`;
-    if (status !== "all") countQuery += ` AND status = '${status}'`;
-    if (type !== "all") countQuery += ` AND type = '${type}'`;
-    
-    const countResult = await sql(countQuery);
-    const totalCount = parseInt(countResult[0]?.count || "0");
 
     return NextResponse.json({
       success: true,
@@ -89,7 +109,7 @@ export async function PATCH(request: NextRequest) {
       SET status = ${newStatus}, 
           admin_note = ${adminNote || null},
           updated_at = NOW()
-      WHERE id = ${orderId}
+      WHERE id = ${orderId}::uuid
     `;
 
     return NextResponse.json({ success: true, message: `Order ${action}d successfully` });

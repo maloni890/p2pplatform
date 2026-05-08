@@ -12,39 +12,87 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = (page - 1) * limit;
 
-    let query = `
-      SELECT 
-        s.*,
-        u.email as user_email,
-        u.phone as user_phone,
-        u.is_blocked as user_blocked
-      FROM sellers s
-      LEFT JOIN users u ON s.user_id = u.id
-      WHERE 1=1
-    `;
+    let sellers;
+    let totalCount;
 
-    if (status === "verified") {
-      query += ` AND s.is_verified = true`;
+    const searchPattern = `%${search}%`;
+
+    // Handle different filter combinations
+    if (status === "verified" && search) {
+      sellers = await sql`
+        SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
+        FROM sellers s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.is_verified = true AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
+        ORDER BY s.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`
+        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id 
+        WHERE s.is_verified = true AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
+      `;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (status === "unverified" && search) {
+      sellers = await sql`
+        SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
+        FROM sellers s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.is_verified = false AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
+        ORDER BY s.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`
+        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id 
+        WHERE s.is_verified = false AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
+      `;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (status === "verified") {
+      sellers = await sql`
+        SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
+        FROM sellers s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.is_verified = true
+        ORDER BY s.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM sellers WHERE is_verified = true`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
     } else if (status === "unverified") {
-      query += ` AND s.is_verified = false`;
+      sellers = await sql`
+        SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
+        FROM sellers s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.is_verified = false
+        ORDER BY s.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM sellers WHERE is_verified = false`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (search) {
+      sellers = await sql`
+        SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
+        FROM sellers s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern}
+        ORDER BY s.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`
+        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id 
+        WHERE s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern}
+      `;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else {
+      sellers = await sql`
+        SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
+        FROM sellers s
+        LEFT JOIN users u ON s.user_id = u.id
+        ORDER BY s.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM sellers`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
     }
-
-    if (search) {
-      query += ` AND (s.name ILIKE '%${search}%' OR s.upi_id ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`;
-    }
-
-    query += ` ORDER BY s.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
-
-    const sellers = await sql(query);
-
-    // Get total count
-    let countQuery = `SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id WHERE 1=1`;
-    if (status === "verified") countQuery += ` AND s.is_verified = true`;
-    else if (status === "unverified") countQuery += ` AND s.is_verified = false`;
-    if (search) countQuery += ` AND (s.name ILIKE '%${search}%' OR s.upi_id ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`;
-    
-    const countResult = await sql(countQuery);
-    const totalCount = parseInt(countResult[0]?.count || "0");
 
     return NextResponse.json({
       success: true,
@@ -73,27 +121,27 @@ export async function PATCH(request: NextRequest) {
 
     switch (action) {
       case "verify":
-        await sql`UPDATE sellers SET is_verified = true, updated_at = NOW() WHERE id = ${sellerId}`;
+        await sql`UPDATE sellers SET is_verified = true, updated_at = NOW() WHERE id = ${sellerId}::uuid`;
         break;
       case "unverify":
-        await sql`UPDATE sellers SET is_verified = false, updated_at = NOW() WHERE id = ${sellerId}`;
+        await sql`UPDATE sellers SET is_verified = false, updated_at = NOW() WHERE id = ${sellerId}::uuid`;
         break;
       case "update_rate":
-        await sql`UPDATE sellers SET rate = ${rate}, updated_at = NOW() WHERE id = ${sellerId}`;
+        await sql`UPDATE sellers SET rate = ${rate}, updated_at = NOW() WHERE id = ${sellerId}::uuid`;
         break;
       case "update_balance":
-        await sql`UPDATE sellers SET available_usdt = ${availableUsdt}, updated_at = NOW() WHERE id = ${sellerId}`;
+        await sql`UPDATE sellers SET available_usdt = ${availableUsdt}, updated_at = NOW() WHERE id = ${sellerId}::uuid`;
         break;
       case "block":
-        const sellerResult = await sql`SELECT user_id FROM sellers WHERE id = ${sellerId}`;
+        const sellerResult = await sql`SELECT user_id FROM sellers WHERE id = ${sellerId}::uuid`;
         if (sellerResult.length > 0) {
-          await sql`UPDATE users SET is_blocked = true WHERE id = ${sellerResult[0].user_id}`;
+          await sql`UPDATE users SET is_blocked = true WHERE id = ${sellerResult[0].user_id}::uuid`;
         }
         break;
       case "unblock":
-        const sellerResult2 = await sql`SELECT user_id FROM sellers WHERE id = ${sellerId}`;
+        const sellerResult2 = await sql`SELECT user_id FROM sellers WHERE id = ${sellerId}::uuid`;
         if (sellerResult2.length > 0) {
-          await sql`UPDATE users SET is_blocked = false WHERE id = ${sellerResult2[0].user_id}`;
+          await sql`UPDATE users SET is_blocked = false WHERE id = ${sellerResult2[0].user_id}::uuid`;
         }
         break;
       default:

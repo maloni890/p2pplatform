@@ -12,32 +12,59 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = (page - 1) * limit;
 
-    let query = `
-      SELECT 
-        id, name, email, phone, role, is_seller, is_blocked, is_verified,
-        total_trades, created_at
-      FROM users
-      WHERE 1=1
-    `;
+    let users;
+    let totalCount;
 
-    if (search) {
-      query += ` AND (name ILIKE '%${search}%' OR email ILIKE '%${search}%' OR phone ILIKE '%${search}%')`;
+    const searchPattern = `%${search}%`;
+
+    if (search && role !== "all") {
+      users = await sql`
+        SELECT id, name, email, phone, role, is_seller, is_blocked, is_verified, total_trades, created_at
+        FROM users
+        WHERE (name ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR phone ILIKE ${searchPattern})
+        AND role = ${role}
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`
+        SELECT COUNT(*) as count FROM users 
+        WHERE (name ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR phone ILIKE ${searchPattern})
+        AND role = ${role}
+      `;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (search) {
+      users = await sql`
+        SELECT id, name, email, phone, role, is_seller, is_blocked, is_verified, total_trades, created_at
+        FROM users
+        WHERE name ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR phone ILIKE ${searchPattern}
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`
+        SELECT COUNT(*) as count FROM users 
+        WHERE name ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR phone ILIKE ${searchPattern}
+      `;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else if (role !== "all") {
+      users = await sql`
+        SELECT id, name, email, phone, role, is_seller, is_blocked, is_verified, total_trades, created_at
+        FROM users
+        WHERE role = ${role}
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM users WHERE role = ${role}`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
+    } else {
+      users = await sql`
+        SELECT id, name, email, phone, role, is_seller, is_blocked, is_verified, total_trades, created_at
+        FROM users
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      const countResult = await sql`SELECT COUNT(*) as count FROM users`;
+      totalCount = parseInt(String(countResult[0]?.count || "0"));
     }
-    if (role !== "all") {
-      query += ` AND role = '${role}'`;
-    }
-
-    query += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
-
-    const users = await sql(query);
-
-    // Get total count
-    let countQuery = `SELECT COUNT(*) as count FROM users WHERE 1=1`;
-    if (search) countQuery += ` AND (name ILIKE '%${search}%' OR email ILIKE '%${search}%' OR phone ILIKE '%${search}%')`;
-    if (role !== "all") countQuery += ` AND role = '${role}'`;
-    
-    const countResult = await sql(countQuery);
-    const totalCount = parseInt(countResult[0]?.count || "0");
 
     return NextResponse.json({
       success: true,
@@ -66,19 +93,19 @@ export async function PATCH(request: NextRequest) {
 
     switch (action) {
       case "block":
-        await sql`UPDATE users SET is_blocked = true, updated_at = NOW() WHERE id = ${userId}`;
+        await sql`UPDATE users SET is_blocked = true, updated_at = NOW() WHERE id = ${userId}::uuid`;
         break;
       case "unblock":
-        await sql`UPDATE users SET is_blocked = false, updated_at = NOW() WHERE id = ${userId}`;
+        await sql`UPDATE users SET is_blocked = false, updated_at = NOW() WHERE id = ${userId}::uuid`;
         break;
       case "verify":
-        await sql`UPDATE users SET is_verified = true, updated_at = NOW() WHERE id = ${userId}`;
+        await sql`UPDATE users SET is_verified = true, updated_at = NOW() WHERE id = ${userId}::uuid`;
         break;
       case "make_seller":
-        await sql`UPDATE users SET is_seller = true, updated_at = NOW() WHERE id = ${userId}`;
+        await sql`UPDATE users SET is_seller = true, updated_at = NOW() WHERE id = ${userId}::uuid`;
         break;
       case "remove_seller":
-        await sql`UPDATE users SET is_seller = false, updated_at = NOW() WHERE id = ${userId}`;
+        await sql`UPDATE users SET is_seller = false, updated_at = NOW() WHERE id = ${userId}::uuid`;
         break;
       default:
         return NextResponse.json({ success: false, error: "Invalid action" }, { status: 400 });
