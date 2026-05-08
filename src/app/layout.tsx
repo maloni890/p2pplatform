@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DTBranch — Buy & Sell USDT | Get INR Instantly",
+  title: "SwapEase — Buy & Sell USDT | Get INR Instantly",
   description:
     "India's fastest P2P USDT trading platform. Buy and sell USDT directly with INR. Instant payout, 100% secure, zero fees, best rates.",
   keywords: ["USDT", "P2P trading", "crypto", "buy USDT", "sell USDT", "INR", "India", "instant payout"],

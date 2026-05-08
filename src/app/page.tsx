@@ -2,27 +2,17 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Zap,
   Shield,
   Percent,
   TrendingUp,
-  Home,
-  Calculator,
-  LayoutDashboard,
-  User,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 const FEATURES = ["Fast", "Secure", "Zero Fee", "Best Rate", "24/7 Support", "Instant"];
 
 export default function HomePage() {
-  const { user } = useAuth();
-  const pathname = usePathname();
   const [currentRate] = useState(106.35);
-
-  const isActive = (path: string) => pathname === path;
 
   // Generate particles
   const [particles, setParticles] = useState<Array<{ id: number; left: number; delay: number }>>([]);
@@ -37,7 +27,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 md:pb-0 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Background particles */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {particles.map((p) => (
@@ -65,9 +55,9 @@ export default function HomePage() {
           <div className="fade-in-up mb-8">
             <div className="inline-flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm">DB</span>
+                <span className="text-white font-bold text-sm">SE</span>
               </div>
-              <span className="text-white font-bold text-xl">DTBranch</span>
+              <span className="text-white font-bold text-xl">SwapEase</span>
             </div>
           </div>
 
@@ -99,22 +89,7 @@ export default function HomePage() {
             India&apos;s most trusted P2P platform for instant USDT to INR conversion with zero fees
           </p>
 
-          {/* CTA Buttons */}
-          <div className="fade-in-up delay-400 flex gap-3 mb-10 px-4">
-            <Link
-              href="/sell"
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-primary hover:bg-[#5d8cff] text-white font-semibold rounded-full transition-all"
-            >
-              <Zap className="size-4" />
-              Sell USDT
-            </Link>
-            <Link
-              href="/buy"
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-transparent border border-white/30 hover:border-white/50 hover:bg-white/5 text-white font-semibold rounded-full transition-all"
-            >
-              Buy USDT
-            </Link>
-          </div>
+          
 
           {/* Feature Tags - Scrolling */}
           <div className="fade-in-up delay-500 overflow-hidden mb-12">
@@ -161,30 +136,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bottom-nav border-t border-border z-50">
-        <div className="flex items-center justify-around h-full max-w-[390px] mx-auto">
-          {[
-            { href: "/", icon: Home, label: "Home" },
-            { href: "/calculator", icon: Calculator, label: "Calculator" },
-            { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-            { href: user ? "/profile" : "/login", icon: User, label: "Profile" },
-          ].map(({ href, icon: Icon, label }) => (
-            <Link
-              key={label}
-              href={href}
-              className={`flex flex-col items-center gap-1 px-4 py-2 transition-colors ${
-                isActive(href)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-white"
-              }`}
-            >
-              <Icon className="size-5" />
-              <span className="text-[10px] font-medium">{label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      
     </div>
   );
 }

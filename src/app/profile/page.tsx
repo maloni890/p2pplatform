@@ -174,7 +174,7 @@ export default function ProfilePage() {
         </button>
 
         {/* App Version */}
-        <p className="text-center text-[11px] text-muted-foreground mt-6">DTBranch v1.0.0</p>
+        <p className="text-center text-[11px] text-muted-foreground mt-6">SwapEase v1.0.0</p>
       </main>
 
       {/* Mobile Bottom Navigation */}

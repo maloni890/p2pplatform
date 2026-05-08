@@ -108,9 +108,9 @@ export default function RegisterPage() {
         <div className="text-center mb-6 fade-in-up">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-sm">DB</span>
+              <span className="text-white font-bold text-sm">SE</span>
             </div>
-            <span className="text-white font-bold text-xl">DTBranch</span>
+            <span className="text-white font-bold text-xl">SwapEase</span>
           </Link>
         </div>
 

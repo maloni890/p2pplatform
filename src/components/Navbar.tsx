@@ -61,9 +61,9 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0" data-testid="nav-logo">
             <div className="size-8 rounded-xl bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xs">DB</span>
+              <span className="text-white font-bold text-xs">SE</span>
             </div>
-            <span className="font-bold text-[17px] tracking-tight text-white">DTBranch</span>
+            <span className="font-bold text-[17px] tracking-tight text-white">SwapEase</span>
           </Link>
 
           {/* Desktop nav links */}
