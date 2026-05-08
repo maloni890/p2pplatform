@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
 
     let tickets;
-    if (userId) {
+    if (userId && isValidUUID(userId)) {
       tickets = await sql`
         SELECT * FROM support_tickets 
         WHERE user_id = ${userId}::uuid
@@ -41,6 +41,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Helper: check if a string is a valid UUID
+function isValidUUID(str: string | null | undefined): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 // POST - Create new ticket
 export async function POST(request: NextRequest) {
   try {
@@ -52,31 +58,43 @@ export async function POST(request: NextRequest) {
     }
 
     const ticketNumber = generateTicketNumber();
+    // Only use userId if it is a real UUID — demo/session IDs must be stored as NULL
+    const validUserId = isValidUUID(userId) ? userId : null;
+    const priority = category === "urgent" || category === "payment_issue" ? "high" : "normal";
 
-    const result = await sql`
-      INSERT INTO support_tickets (
-        ticket_number, user_id, user_name, user_email, user_phone, 
-        subject, category, message, order_id, status, priority
-      ) VALUES (
-        ${ticketNumber},
-        ${userId || null}::uuid,
-        ${userName || "Guest"},
-        ${userEmail},
-        ${userPhone || null},
-        ${subject},
-        ${category},
-        ${message},
-        ${orderId || null},
-        'open',
-        ${category === "urgent" || category === "payment_issue" ? "high" : "normal"}
-      )
-      RETURNING *
-    `;
+    let result;
+    if (validUserId) {
+      result = await sql`
+        INSERT INTO support_tickets (
+          ticket_number, user_id, user_name, user_email, user_phone,
+          subject, category, message, order_id, status, priority
+        ) VALUES (
+          ${ticketNumber}, ${validUserId}::uuid,
+          ${userName || "Guest"}, ${userEmail}, ${userPhone || null},
+          ${subject}, ${category}, ${message}, ${orderId || null},
+          'open', ${priority}
+        )
+        RETURNING *
+      `;
+    } else {
+      result = await sql`
+        INSERT INTO support_tickets (
+          ticket_number, user_id, user_name, user_email, user_phone,
+          subject, category, message, order_id, status, priority
+        ) VALUES (
+          ${ticketNumber}, NULL,
+          ${userName || "Guest"}, ${userEmail}, ${userPhone || null},
+          ${subject}, ${category}, ${message}, ${orderId || null},
+          'open', ${priority}
+        )
+        RETURNING *
+      `;
+    }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       ticket: result[0],
-      message: `Ticket ${ticketNumber} created successfully` 
+      message: `Ticket ${ticketNumber} created successfully`,
     });
   } catch (error) {
     console.error("Error creating ticket:", error);

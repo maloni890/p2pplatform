@@ -113,9 +113,8 @@ export async function PATCH(request: NextRequest) {
         UPDATE support_tickets 
         SET 
           admin_reply = ${adminReply},
-          replied_by = ${repliedBy || null}::uuid,
           replied_at = NOW(),
-          status = COALESCE(${status}, 'in_progress'),
+          status = COALESCE(${status || null}, 'in_progress'),
           updated_at = NOW()
         WHERE id = ${ticketId}::uuid
         RETURNING *
