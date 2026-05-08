@@ -22,13 +22,13 @@ export async function GET(request: NextRequest) {
       sellers = await sql`
         SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
         FROM sellers s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.is_verified = true AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
         ORDER BY s.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
       const countResult = await sql`
-        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id 
+        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.is_verified = true AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
       `;
       totalCount = parseInt(String(countResult[0]?.count || "0"));
@@ -36,13 +36,13 @@ export async function GET(request: NextRequest) {
       sellers = await sql`
         SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
         FROM sellers s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.is_verified = false AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
         ORDER BY s.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
       const countResult = await sql`
-        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id 
+        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.is_verified = false AND (s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})
       `;
       totalCount = parseInt(String(countResult[0]?.count || "0"));
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       sellers = await sql`
         SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
         FROM sellers s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.is_verified = true
         ORDER BY s.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       sellers = await sql`
         SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
         FROM sellers s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.is_verified = false
         ORDER BY s.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
@@ -72,13 +72,13 @@ export async function GET(request: NextRequest) {
       sellers = await sql`
         SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
         FROM sellers s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern}
         ORDER BY s.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
       const countResult = await sql`
-        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id = u.id 
+        SELECT COUNT(*) as count FROM sellers s LEFT JOIN users u ON s.user_id::uuid = u.id
         WHERE s.name ILIKE ${searchPattern} OR s.upi_id ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern}
       `;
       totalCount = parseInt(String(countResult[0]?.count || "0"));
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       sellers = await sql`
         SELECT s.*, u.email as user_email, u.phone as user_phone, u.is_blocked as user_blocked
         FROM sellers s
-        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN users u ON s.user_id::uuid = u.id
         ORDER BY s.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;

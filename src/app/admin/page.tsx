@@ -68,7 +68,28 @@ interface User {
   is_blocked: boolean;
   is_verified: boolean;
   total_trades: number;
+  referral_code: string;
+  referred_by: string;
   created_at: string;
+  updated_at: string;
+}
+
+interface UserDetail extends User {
+  total_buy_orders: number;
+  total_sell_orders: number;
+  total_volume_usdt: number;
+  total_volume_inr: number;
+  completed_trades: number;
+  disputed_trades: number;
+  recent_orders: {
+    id: string;
+    order_number: string;
+    type: string;
+    usdt_amount: number;
+    inr_amount: number;
+    status: string;
+    created_at: string;
+  }[];
 }
 
 interface KycApplication {
@@ -188,6 +209,7 @@ export default function AdminDashboard() {
   // Filter states
   const [orderFilter, setOrderFilter] = useState({ status: "all", type: "all" });
   const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [kycFilter, setKycFilter] = useState("pending");
   const [sellerFilter, setSellerFilter] = useState("all");
   const [supportFilter, setSupportFilter] = useState({ status: "all", category: "all" });
@@ -199,6 +221,8 @@ export default function AdminDashboard() {
   // Modals
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedKyc, setSelectedKyc] = useState<KycApplication | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
@@ -244,7 +268,7 @@ export default function AdminDashboard() {
           break;
 
         case "users":
-          const usersRes = await fetch(`/api/admin/users?search=${userSearch}`);
+          const usersRes = await fetch(`/api/admin/users?search=${userSearch}&role=${userRoleFilter}`);
           const usersData = await usersRes.json();
           if (usersData.success) setUsers(usersData.users);
           break;
@@ -292,7 +316,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, activeTab, orderFilter, orderPage, userSearch, kycFilter, sellerFilter, supportFilter, supportSearch]);
+  }, [isAuthenticated, activeTab, orderFilter, orderPage, userSearch, userRoleFilter, kycFilter, sellerFilter, supportFilter, supportSearch]);
 
   useEffect(() => {
     fetchData();
@@ -432,6 +456,19 @@ export default function AdminDashboard() {
       if (data.success) fetchData();
     } catch (error) {
       console.error("Status update failed:", error);
+    }
+  };
+
+  const handleViewUser = async (userId: string) => {
+    setUserDetailLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`);
+      const data = await res.json();
+      if (data.success) setSelectedUser(data.user);
+    } catch (error) {
+      console.error("Failed to fetch user detail:", error);
+    } finally {
+      setUserDetailLoading(false);
     }
   };
 
@@ -737,44 +774,75 @@ export default function AdminDashboard() {
               {/* Users Tab */}
               {activeTab === "users" && (
                 <div className="space-y-4">
-                  {/* Search */}
-                  <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="Search by name, email, or phone..."
-                      value={userSearch}
-                      onChange={(e) => setUserSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-surface border border-border rounded-lg text-white text-[12px] placeholder:text-muted-foreground"
-                    />
+                  {/* Filters Row */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <div className="relative flex-1 min-w-[200px] max-w-sm">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search by name, email, or phone..."
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-surface border border-border rounded-lg text-white text-[12px] placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <select
+                      value={userRoleFilter}
+                      onChange={(e) => setUserRoleFilter(e.target.value)}
+                      className="px-3 py-2 bg-surface border border-border rounded-lg text-[12px] text-white"
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="user">Users</option>
+                      <option value="admin">Admins</option>
+                    </select>
+                    <div className="ml-auto text-[11px] text-muted-foreground">{users.length} users</div>
                   </div>
 
                   {/* Users Table */}
-                  <div className="bg-card border border-border rounded-xl overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-surface">
+                  <div className="bg-card border border-border rounded-xl overflow-x-auto">
+                    <table className="w-full min-w-[700px]">
+                      <thead className="bg-surface border-b border-border">
                         <tr>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">#</th>
                           <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">User</th>
                           <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Contact</th>
-                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Status</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Role / Status</th>
                           <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Trades</th>
+                          <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Referral</th>
                           <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Joined</th>
                           <th className="px-4 py-3 text-left text-[11px] font-medium text-muted-foreground">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {users.map((user) => (
-                          <tr key={user.id} className="hover:bg-surface/50">
+                        {users.map((user, idx) => (
+                          <tr key={user.id} className="hover:bg-surface/50 transition-colors">
+                            <td className="px-4 py-3 text-[11px] text-muted-foreground">{idx + 1}</td>
                             <td className="px-4 py-3">
-                              <p className="text-[12px] font-medium text-white">{user.name || "No name"}</p>
-                              <p className="text-[10px] text-muted-foreground">{user.role}</p>
+                              <div className="flex items-center gap-2">
+                                <div className="size-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                  <span className="text-[11px] font-bold text-primary">
+                                    {(user.name || user.email || "?")[0].toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="text-[12px] font-medium text-white">{user.name || "No name"}</p>
+                                  <p className="text-[10px] text-muted-foreground font-mono">{user.id.slice(0, 8)}…</p>
+                                </div>
+                              </div>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-[11px] text-white">{user.email}</p>
-                              <p className="text-[10px] text-muted-foreground">{user.phone}</p>
+                              <p className="text-[11px] text-white">{user.email || "—"}</p>
+                              <p className="text-[10px] text-muted-foreground">{user.phone || "—"}</p>
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex gap-1 flex-wrap">
+                              <div className="flex flex-wrap gap-1">
+                                <span className={`px-1.5 py-0.5 text-[9px] rounded font-medium ${
+                                  user.role === "admin"
+                                    ? "bg-amber-500/15 text-amber-400"
+                                    : "bg-surface text-muted-foreground"
+                                }`}>
+                                  {user.role}
+                                </span>
                                 {user.is_verified && (
                                   <span className="px-1.5 py-0.5 bg-green-500/15 text-green-400 text-[9px] rounded">Verified</span>
                                 )}
@@ -786,12 +854,24 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-[12px] text-white">{user.total_trades}</td>
+                            <td className="px-4 py-3 text-[12px] text-white font-medium">{user.total_trades}</td>
+                            <td className="px-4 py-3">
+                              <p className="text-[11px] text-white font-mono">{user.referral_code || "—"}</p>
+                              {user.referred_by && (
+                                <p className="text-[10px] text-muted-foreground">via {user.referred_by}</p>
+                              )}
+                            </td>
                             <td className="px-4 py-3 text-[11px] text-muted-foreground">
                               {formatDate(user.created_at)}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex gap-1">
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => handleViewUser(user.id)}
+                                  className="px-2 py-1 bg-primary/15 text-primary text-[10px] rounded hover:bg-primary/25 flex items-center gap-1"
+                                >
+                                  <Eye className="size-3" /> View
+                                </button>
                                 {user.is_blocked ? (
                                   <button
                                     onClick={() => handleUserAction(user.id, "unblock")}
@@ -815,10 +895,205 @@ export default function AdminDashboard() {
                     </table>
 
                     {users.length === 0 && (
-                      <div className="py-12 text-center text-muted-foreground text-[13px]">
-                        No users found
+                      <div className="py-16 text-center">
+                        <Users className="size-10 text-muted-foreground mx-auto mb-2 opacity-40" />
+                        <p className="text-muted-foreground text-[13px]">No users found</p>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* User Detail Modal */}
+              {selectedUser && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    {/* Header */}
+                    <div className="p-5 border-b border-border flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="size-12 rounded-full bg-primary/20 flex items-center justify-center">
+                          <span className="text-lg font-bold text-primary">
+                            {(selectedUser.name || selectedUser.email || "?")[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-[16px] font-semibold text-white">{selectedUser.name || "No name"}</h3>
+                          <p className="text-[11px] text-muted-foreground">{selectedUser.email}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setSelectedUser(null)} className="p-1.5 hover:bg-surface rounded-lg">
+                        <X className="size-5 text-muted-foreground" />
+                      </button>
+                    </div>
+
+                    <div className="p-5 space-y-5">
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-2">
+                        <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${
+                          selectedUser.role === "admin" ? "bg-amber-500/15 text-amber-400" : "bg-surface text-muted-foreground"
+                        }`}>{selectedUser.role.toUpperCase()}</span>
+                        {selectedUser.is_verified && <span className="px-2 py-0.5 bg-green-500/15 text-green-400 text-[10px] rounded">Verified</span>}
+                        {selectedUser.is_seller && <span className="px-2 py-0.5 bg-primary/15 text-primary text-[10px] rounded">Seller</span>}
+                        {selectedUser.is_blocked && <span className="px-2 py-0.5 bg-red-500/15 text-red-400 text-[10px] rounded">Blocked</span>}
+                      </div>
+
+                      {/* Personal Info */}
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Personal Information</p>
+                        <div className="bg-surface rounded-xl p-4 grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Full Name</p>
+                            <p className="text-[12px] text-white font-medium">{selectedUser.name || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Phone</p>
+                            <p className="text-[12px] text-white">{selectedUser.phone || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Email</p>
+                            <p className="text-[12px] text-white">{selectedUser.email || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">User ID</p>
+                            <p className="text-[11px] text-white font-mono">{selectedUser.id.slice(0, 18)}…</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Referral Code</p>
+                            <p className="text-[12px] text-white font-mono">{selectedUser.referral_code || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Referred By</p>
+                            <p className="text-[12px] text-white font-mono">{selectedUser.referred_by || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Joined</p>
+                            <p className="text-[12px] text-white">{formatDate(selectedUser.created_at)}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Last Updated</p>
+                            <p className="text-[12px] text-white">{formatDate(selectedUser.updated_at)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Trade Stats */}
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Trade Statistics</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="bg-surface rounded-xl p-3 text-center">
+                            <p className="text-xl font-bold text-white">{selectedUser.total_trades}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Total Trades</p>
+                          </div>
+                          <div className="bg-surface rounded-xl p-3 text-center">
+                            <p className="text-xl font-bold text-green-400">{selectedUser.completed_trades}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Completed</p>
+                          </div>
+                          <div className="bg-surface rounded-xl p-3 text-center">
+                            <p className="text-xl font-bold text-red-400">{selectedUser.disputed_trades}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Disputed</p>
+                          </div>
+                          <div className="bg-surface rounded-xl p-3 text-center">
+                            <p className="text-xl font-bold text-primary">{selectedUser.total_buy_orders}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Buy Orders</p>
+                          </div>
+                          <div className="bg-surface rounded-xl p-3 text-center">
+                            <p className="text-xl font-bold text-amber-400">{selectedUser.total_sell_orders}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Sell Orders</p>
+                          </div>
+                          <div className="bg-surface rounded-xl p-3 text-center">
+                            <p className="text-xl font-bold text-white">{Number(selectedUser.total_volume_usdt || 0).toFixed(0)}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Vol (USDT)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Recent Orders */}
+                      {selectedUser.recent_orders?.length > 0 && (
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Recent Orders</p>
+                          <div className="bg-surface rounded-xl overflow-hidden">
+                            <table className="w-full">
+                              <thead className="border-b border-border">
+                                <tr>
+                                  <th className="px-3 py-2 text-left text-[10px] text-muted-foreground">Order</th>
+                                  <th className="px-3 py-2 text-left text-[10px] text-muted-foreground">Type</th>
+                                  <th className="px-3 py-2 text-left text-[10px] text-muted-foreground">Amount</th>
+                                  <th className="px-3 py-2 text-left text-[10px] text-muted-foreground">Status</th>
+                                  <th className="px-3 py-2 text-left text-[10px] text-muted-foreground">Date</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {selectedUser.recent_orders.map((order) => (
+                                  <tr key={order.id}>
+                                    <td className="px-3 py-2 text-[11px] text-white font-mono">{order.order_number}</td>
+                                    <td className="px-3 py-2">
+                                      <span className={`px-1.5 py-0.5 text-[9px] rounded ${order.type === "buy" ? "bg-green-500/15 text-green-400" : "bg-amber-500/15 text-amber-400"}`}>
+                                        {order.type.toUpperCase()}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2 text-[11px] text-white">{Number(order.usdt_amount).toFixed(2)} USDT</td>
+                                    <td className="px-3 py-2">
+                                      <span className={`px-1.5 py-0.5 text-[9px] rounded ${
+                                        order.status === "completed" ? "bg-green-500/15 text-green-400" :
+                                        order.status === "disputed" ? "bg-red-500/15 text-red-400" :
+                                        "bg-amber-500/15 text-amber-400"
+                                      }`}>{order.status}</span>
+                                    </td>
+                                    <td className="px-3 py-2 text-[10px] text-muted-foreground">{formatDate(order.created_at)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Quick Actions */}
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Actions</p>
+                        <div className="flex flex-wrap gap-2">
+                          {!selectedUser.is_verified && (
+                            <button
+                              onClick={() => { handleUserAction(selectedUser.id, "verify"); setSelectedUser({ ...selectedUser, is_verified: true }); }}
+                              className="px-3 py-1.5 bg-green-500/15 text-green-400 text-[11px] rounded-lg hover:bg-green-500/25 flex items-center gap-1.5"
+                            >
+                              <CheckCircle2 className="size-3.5" /> Verify User
+                            </button>
+                          )}
+                          {!selectedUser.is_seller && (
+                            <button
+                              onClick={() => { handleUserAction(selectedUser.id, "make_seller"); setSelectedUser({ ...selectedUser, is_seller: true }); }}
+                              className="px-3 py-1.5 bg-primary/15 text-primary text-[11px] rounded-lg hover:bg-primary/25 flex items-center gap-1.5"
+                            >
+                              <UserCheck className="size-3.5" /> Make Seller
+                            </button>
+                          )}
+                          {selectedUser.is_seller && (
+                            <button
+                              onClick={() => { handleUserAction(selectedUser.id, "remove_seller"); setSelectedUser({ ...selectedUser, is_seller: false }); }}
+                              className="px-3 py-1.5 bg-surface text-muted-foreground text-[11px] rounded-lg hover:text-white flex items-center gap-1.5"
+                            >
+                              <XCircle className="size-3.5" /> Remove Seller
+                            </button>
+                          )}
+                          {selectedUser.is_blocked ? (
+                            <button
+                              onClick={() => { handleUserAction(selectedUser.id, "unblock"); setSelectedUser({ ...selectedUser, is_blocked: false }); }}
+                              className="px-3 py-1.5 bg-green-500/15 text-green-400 text-[11px] rounded-lg hover:bg-green-500/25 flex items-center gap-1.5"
+                            >
+                              <Check className="size-3.5" /> Unblock User
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => { handleUserAction(selectedUser.id, "block"); setSelectedUser({ ...selectedUser, is_blocked: true }); }}
+                              className="px-3 py-1.5 bg-red-500/15 text-red-400 text-[11px] rounded-lg hover:bg-red-500/25 flex items-center gap-1.5"
+                            >
+                              <XCircle className="size-3.5" /> Block User
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
