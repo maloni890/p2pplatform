@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -22,34 +22,64 @@ import {
   X,
   Wallet,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-const RATE = 106.35;
 const PLATFORM_FEE_PERCENT = 0.5;
 const MIN_INR = 500;
 const MAX_INR = 1000000;
 
 interface Seller {
   id: string;
+  user_id: string;
   name: string;
-  initials: string;
-  verified: boolean;
+  username: string;
+  avatar_initials: string;
+  is_verified: boolean;
+  is_online: boolean;
+  available_usdt: number;
   rate: number;
-  available: number;
-  completionRate: number;
-  avgReleaseTime: string;
-  trades: number;
-  upiId: string;
+  upi_id: string;
+  bank_account: string | null;
+  bank_ifsc: string | null;
+  bank_name: string | null;
+  completion_rate: number;
+  avg_response_time: number;
+  total_trades: number;
+  rating: number;
+  min_limit: number;
+  max_limit: number;
 }
 
-const ACTIVE_SELLERS: Seller[] = [
-  { id: "S001", name: "Vikram Singh", initials: "VS", verified: true, rate: 106.20, available: 5000, completionRate: 99.2, avgReleaseTime: "3 min", trades: 1245, upiId: "vikram****@okaxis" },
-  { id: "S002", name: "Anjali Mehta", initials: "AM", verified: true, rate: 106.25, available: 8500, completionRate: 98.8, avgReleaseTime: "5 min", trades: 856, upiId: "anjali****@upi" },
-  { id: "S003", name: "Karan Joshi", initials: "KJ", verified: true, rate: 106.15, available: 2500, completionRate: 99.6, avgReleaseTime: "2 min", trades: 2341, upiId: "karan****@paytm" },
-  { id: "S004", name: "Neha Gupta", initials: "NG", verified: false, rate: 106.10, available: 1000, completionRate: 96.5, avgReleaseTime: "8 min", trades: 124, upiId: "neha****@ybl" },
-];
+// Loading Skeleton Component
+function SellerSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-xl p-3 animate-pulse">
+      <div className="flex items-start gap-2.5 mb-2.5">
+        <div className="size-9 rounded-full bg-surface shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="h-3 bg-surface rounded w-24 mb-1.5" />
+          <div className="h-2 bg-surface rounded w-32" />
+        </div>
+        <div className="text-right">
+          <div className="h-4 bg-surface rounded w-12 mb-1" />
+          <div className="h-2 bg-surface rounded w-10" />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-2.5 pb-2.5 border-b border-border">
+        {[1, 2, 3].map((i) => (
+          <div key={i}>
+            <div className="h-2 bg-surface rounded w-12 mb-1" />
+            <div className="h-3 bg-surface rounded w-8" />
+          </div>
+        ))}
+      </div>
+      <div className="h-8 bg-surface rounded-full w-full" />
+    </div>
+  );
+}
 
 export default function BuyPage() {
   const { user } = useAuth();
@@ -71,9 +101,16 @@ export default function BuyPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const [txHash, setTxHash] = useState("");
+  
+  // New state for database integration
+  const [sellers, setSellers] = useState<Seller[]>([]);
+  const [loadingSellers, setLoadingSellers] = useState(false);
+  const [sellersError, setSellersError] = useState<string | null>(null);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [liveRate, setLiveRate] = useState(106.35);
 
   const amountNum = parseFloat(amount) || 0;
-  const sellerRate = selectedSeller?.rate || RATE;
+  const sellerRate = selectedSeller?.rate || liveRate;
   const inrAmount = inputMode === "inr" ? amountNum : amountNum * sellerRate;
   const usdtAmount = inputMode === "usdt" ? amountNum : amountNum / sellerRate;
   const platformFee = inrAmount * (PLATFORM_FEE_PERCENT / 100);
@@ -82,6 +119,41 @@ export default function BuyPage() {
   useEffect(() => {
     if (!user) router.push("/login?redirect=/buy");
   }, [user, router]);
+
+  // Fetch sellers from database
+  const fetchSellers = useCallback(async () => {
+    if (usdtAmount <= 0) return;
+    
+    setLoadingSellers(true);
+    setSellersError(null);
+    
+    try {
+      const res = await fetch(`/api/sellers?minAmount=${usdtAmount}`);
+      const data = await res.json();
+      
+      if (data.success) {
+        setSellers(data.sellers);
+        // Update live rate from first seller if available
+        if (data.sellers.length > 0) {
+          setLiveRate(parseFloat(data.sellers[0].rate));
+        }
+      } else {
+        setSellersError("Failed to load sellers");
+      }
+    } catch (error) {
+      console.error("Error fetching sellers:", error);
+      setSellersError("Failed to load sellers. Please try again.");
+    } finally {
+      setLoadingSellers(false);
+    }
+  }, [usdtAmount]);
+
+  // Fetch sellers when entering step 2
+  useEffect(() => {
+    if (step === 2) {
+      fetchSellers();
+    }
+  }, [step, fetchSellers]);
 
   // Countdown for step 3
   useEffect(() => {
@@ -101,7 +173,7 @@ export default function BuyPage() {
 
   const validateStep1 = () => {
     const newErrors: { amount?: string } = {};
-    const inr = inputMode === "inr" ? amountNum : amountNum * RATE;
+    const inr = inputMode === "inr" ? amountNum : amountNum * liveRate;
     if (!amount || amountNum <= 0) newErrors.amount = "Please enter a valid amount";
     else if (inr < MIN_INR) newErrors.amount = `Minimum amount is ₹${MIN_INR}`;
     else if (inr > MAX_INR) newErrors.amount = `Maximum amount is ₹${MAX_INR.toLocaleString()}`;
@@ -111,8 +183,43 @@ export default function BuyPage() {
 
   const handleStep1 = () => validateStep1() && setStep(2);
 
-  const handleSelectSeller = (seller: Seller) => {
+  const handleSelectSeller = async (seller: Seller) => {
     setSelectedSeller(seller);
+    setIsProcessing(true);
+    
+    // Create order in database
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyerId: user?.id || user?.username,
+          buyerName: user?.name || user?.username,
+          sellerId: seller.id,
+          sellerUserId: seller.user_id,
+          sellerName: seller.name,
+          type: "buy",
+          usdtAmount: usdtAmount,
+          inrAmount: usdtAmount * seller.rate,
+          rate: seller.rate,
+          commission: (usdtAmount * seller.rate) * (PLATFORM_FEE_PERCENT / 100),
+          paymentMethod: "UPI",
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setCurrentOrderId(data.order.id);
+        toast.success("Order created! Pay the seller.");
+      } else {
+        toast.error("Failed to create order");
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast.error("Failed to create order");
+    }
+    
+    setIsProcessing(false);
     setStep(3);
     setTimeLeft(15 * 60);
   };
@@ -140,11 +247,32 @@ export default function BuyPage() {
     }
 
     setIsProcessing(true);
-    await new Promise((r) => setTimeout(r, 2000));
+    
+    // Update order status in database
+    try {
+      const res = await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: currentOrderId,
+          status: "payment_uploaded",
+          paymentScreenshot: screenshotPreview, // In production, upload to storage
+          utrNumber: utr,
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Payment proof uploaded!");
+      }
+    } catch (error) {
+      console.error("Error updating order:", error);
+    }
+    
     setIsProcessing(false);
     setStep(5);
 
-    // Auto-complete after 3s
+    // Simulate seller releasing USDT
     setTimeout(() => {
       const hash = "0x" + Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
       setTxHash(hash);
@@ -164,8 +292,23 @@ export default function BuyPage() {
     return !newErrors.wallet;
   };
 
-  const handleConfirmWallet = () => {
+  const handleConfirmWallet = async () => {
     if (validateStep5Wallet()) {
+      // Update order with wallet address
+      try {
+        await fetch("/api/orders", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: currentOrderId,
+            status: "completed",
+            buyerWalletAddress: walletAddress,
+            buyerWalletNetwork: network,
+          }),
+        });
+      } catch (error) {
+        console.error("Error updating order:", error);
+      }
       toast.success(`${usdtAmount.toFixed(2)} USDT will be sent to your wallet`);
     }
   };
@@ -324,7 +467,7 @@ export default function BuyPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
                   </span>
-                  ₹{RATE.toFixed(2)}/USDT
+                  ₹{liveRate.toFixed(2)}/USDT
                 </span>
               </div>
               <div className="h-px bg-border" />
@@ -361,7 +504,7 @@ export default function BuyPage() {
           </div>
         )}
 
-        {/* Step 2: Select Seller */}
+        {/* Step 2: Select Seller - Now with real database calls */}
         {step === 2 && (
           <div className="space-y-3 fade-in-up">
             <div className="bg-card border border-border rounded-xl p-3">
@@ -371,71 +514,134 @@ export default function BuyPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              {ACTIVE_SELLERS.filter((s) => s.available >= usdtAmount).map((seller) => (
-                <div
-                  key={seller.id}
-                  className="bg-card border border-border hover:border-primary/40 rounded-xl p-3 transition-colors"
-                >
-                  <div className="flex items-start gap-2.5 mb-2.5">
-                    <div className="size-9 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                      {seller.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <p className="text-[12px] font-semibold text-white truncate">{seller.name}</p>
-                        {seller.verified && (
-                          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 bg-green-500/15 border border-green-500/30 rounded-full">
-                            <CheckCircle2 className="size-2.5 text-green-400" />
-                            <span className="text-[7px] text-green-400 font-semibold">Verified</span>
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[9px] text-muted-foreground">
-                        Available: {seller.available.toLocaleString()} USDT
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[14px] font-bold text-primary">₹{seller.rate}</p>
-                      <p className="text-[8px] text-muted-foreground">per USDT</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 mb-2.5 pb-2.5 border-b border-border">
-                    <div>
-                      <p className="text-[8px] text-muted-foreground">Completion</p>
-                      <p className="text-[10px] font-semibold text-white">{seller.completionRate}%</p>
-                    </div>
-                    <div>
-                      <p className="text-[8px] text-muted-foreground">Release</p>
-                      <p className="text-[10px] font-semibold text-white">{seller.avgReleaseTime}</p>
-                    </div>
-                    <div>
-                      <p className="text-[8px] text-muted-foreground">Trades</p>
-                      <p className="text-[10px] font-semibold text-white inline-flex items-center gap-0.5">
-                        <Star className="size-2.5 text-amber-400" fill="currentColor" />
-                        {seller.trades}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleSelectSeller(seller)}
-                    className="w-full py-2 bg-primary hover:bg-[#5d8cff] text-white text-[11px] font-semibold rounded-full transition-colors"
-                  >
-                    Buy from this Seller
-                  </button>
-                </div>
-              ))}
-
-              {ACTIVE_SELLERS.filter((s) => s.available >= usdtAmount).length === 0 && (
-                <div className="bg-card border border-border rounded-xl p-6 text-center">
-                  <p className="text-[11px] text-muted-foreground">
-                    No sellers available for this amount. Try a smaller amount.
-                  </p>
-                </div>
-              )}
+            {/* Refresh Button */}
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-muted-foreground">
+                {sellers.length} seller{sellers.length !== 1 ? "s" : ""} available
+              </p>
+              <button
+                onClick={fetchSellers}
+                disabled={loadingSellers}
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`size-3 ${loadingSellers ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
             </div>
+
+            {/* Loading State */}
+            {loadingSellers && (
+              <div className="space-y-2">
+                <SellerSkeleton />
+                <SellerSkeleton />
+                <SellerSkeleton />
+              </div>
+            )}
+
+            {/* Error State */}
+            {sellersError && !loadingSellers && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                <AlertCircle className="size-8 text-red-400 mx-auto mb-2" />
+                <p className="text-[11px] text-red-400 mb-2">{sellersError}</p>
+                <button
+                  onClick={fetchSellers}
+                  className="px-4 py-1.5 bg-red-500/20 text-red-400 text-[10px] font-semibold rounded-full hover:bg-red-500/30 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loadingSellers && !sellersError && sellers.length === 0 && (
+              <div className="bg-card border border-border rounded-xl p-6 text-center">
+                <div className="size-12 rounded-full bg-surface flex items-center justify-center mx-auto mb-3">
+                  <User className="size-6 text-muted-foreground" />
+                </div>
+                <p className="text-[12px] font-semibold text-white mb-1">No sellers available</p>
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  No sellers have enough USDT for your order right now. Try a smaller amount or check back later.
+                </p>
+                <button
+                  onClick={() => setStep(1)}
+                  className="px-4 py-1.5 bg-primary/20 text-primary text-[10px] font-semibold rounded-full hover:bg-primary/30 transition-colors"
+                >
+                  Change Amount
+                </button>
+              </div>
+            )}
+
+            {/* Sellers List */}
+            {!loadingSellers && !sellersError && sellers.length > 0 && (
+              <div className="space-y-2">
+                {sellers.map((seller) => (
+                  <div
+                    key={seller.id}
+                    className="bg-card border border-border hover:border-primary/40 rounded-xl p-3 transition-colors"
+                  >
+                    <div className="flex items-start gap-2.5 mb-2.5">
+                      <div className="size-9 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                        {seller.avatar_initials || seller.name.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="text-[12px] font-semibold text-white truncate">{seller.name}</p>
+                          {seller.is_verified && (
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.5 bg-green-500/15 border border-green-500/30 rounded-full">
+                              <CheckCircle2 className="size-2.5 text-green-400" />
+                              <span className="text-[7px] text-green-400 font-semibold">Verified</span>
+                            </span>
+                          )}
+                          {seller.is_online && (
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[9px] text-muted-foreground">
+                          Available: {parseFloat(String(seller.available_usdt)).toLocaleString()} USDT
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[14px] font-bold text-primary">₹{parseFloat(String(seller.rate)).toFixed(2)}</p>
+                        <p className="text-[8px] text-muted-foreground">per USDT</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mb-2.5 pb-2.5 border-b border-border">
+                      <div>
+                        <p className="text-[8px] text-muted-foreground">Completion</p>
+                        <p className="text-[10px] font-semibold text-white">{parseFloat(String(seller.completion_rate)).toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-muted-foreground">Response</p>
+                        <p className="text-[10px] font-semibold text-white">~{seller.avg_response_time} min</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-muted-foreground">Trades</p>
+                        <p className="text-[10px] font-semibold text-white inline-flex items-center gap-0.5">
+                          <Star className="size-2.5 text-amber-400" fill="currentColor" />
+                          {seller.total_trades}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleSelectSeller(seller)}
+                      disabled={isProcessing}
+                      className="w-full py-2 bg-primary hover:bg-[#5d8cff] text-white text-[11px] font-semibold rounded-full transition-colors disabled:opacity-50"
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="size-4 animate-spin mx-auto" />
+                      ) : (
+                        "Buy from this Seller"
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -455,68 +661,52 @@ export default function BuyPage() {
             <div className="bg-card border border-border rounded-xl p-3">
               <div className="flex items-center gap-2">
                 <div className="size-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-[9px] font-bold">
-                  {selectedSeller.initials}
+                  {selectedSeller.avatar_initials}
                 </div>
                 <div className="flex-1">
                   <p className="text-[11px] font-semibold text-white">{selectedSeller.name}</p>
-                  <p className="text-[9px] text-muted-foreground">Verified Seller • {selectedSeller.completionRate}%</p>
+                  <p className="text-[9px] text-muted-foreground">Verified Seller • {parseFloat(String(selectedSeller.completion_rate)).toFixed(1)}%</p>
                 </div>
-                <p className="text-[12px] font-bold text-primary">₹{selectedSeller.rate}</p>
+                <p className="text-[12px] font-bold text-primary">₹{parseFloat(String(selectedSeller.rate)).toFixed(2)}</p>
               </div>
             </div>
 
             {/* Payment Details */}
-            <div className="bg-card border border-border rounded-xl p-3 space-y-2.5">
-              <p className="text-[11px] font-semibold text-white mb-1">Pay to seller&apos;s UPI</p>
-
-              <div className="bg-surface rounded-lg p-2.5 flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-[8px] text-muted-foreground mb-0.5">UPI ID</p>
-                  <p className="text-[12px] font-mono font-semibold text-white truncate">{selectedSeller.upiId}</p>
-                </div>
-                <button
-                  onClick={() => copyText(selectedSeller.upiId, "upi")}
-                  className="p-1.5 bg-primary/15 rounded-md ml-2"
-                >
-                  {copied === "upi" ? <Check className="size-3 text-primary" /> : <Copy className="size-3 text-primary" />}
-                </button>
+            <div className="bg-card border border-border rounded-xl p-3 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <span className="text-[10px] text-muted-foreground">Pay Amount</span>
+                <span className="text-[16px] font-bold text-white">
+                  ₹{(usdtAmount * parseFloat(String(selectedSeller.rate))).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                </span>
               </div>
 
-              <div className="bg-surface rounded-lg p-2.5 flex items-center justify-between">
-                <div>
-                  <p className="text-[8px] text-muted-foreground mb-0.5">Exact Amount to Pay</p>
-                  <p className="text-[16px] font-bold text-primary">
-                    ₹{totalInr.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                  </p>
+              {/* UPI ID */}
+              <div>
+                <label className="text-[9px] text-muted-foreground mb-1 block">Pay to UPI</label>
+                <div className="flex items-center gap-2 bg-surface rounded-lg p-2">
+                  <code className="flex-1 text-[11px] text-white font-mono">{selectedSeller.upi_id}</code>
+                  <button
+                    onClick={() => copyText(selectedSeller.upi_id, "upi")}
+                    className="p-1.5 bg-primary/15 rounded-md transition-colors"
+                  >
+                    {copied === "upi" ? <Check className="size-3 text-primary" /> : <Copy className="size-3 text-primary" />}
+                  </button>
                 </div>
-                <button
-                  onClick={() => copyText(totalInr.toFixed(2), "amount")}
-                  className="p-1.5 bg-primary/15 rounded-md"
-                >
-                  {copied === "amount" ? <Check className="size-3 text-primary" /> : <Copy className="size-3 text-primary" />}
-                </button>
               </div>
             </div>
 
-            {/* Warnings */}
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1.5">
-              <div className="flex items-start gap-1.5">
-                <AlertTriangle className="size-3 text-red-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-white">
-                  <span className="font-semibold">Pay exact amount only</span>
-                </p>
-              </div>
-              <div className="flex items-start gap-1.5">
-                <AlertTriangle className="size-3 text-red-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-white">
-                  <span className="font-semibold">Do not write USDT/Crypto</span> in payment note
-                </p>
-              </div>
-              <div className="flex items-start gap-1.5">
-                <AlertTriangle className="size-3 text-red-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-white">
-                  Pay only from <span className="font-semibold">your verified bank account</span>
-                </p>
+            {/* Warning */}
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="size-4 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] text-red-400 font-semibold mb-1">Important Instructions</p>
+                  <ul className="text-[9px] text-red-400/80 space-y-0.5 list-disc pl-3">
+                    <li>Pay exact amount shown above</li>
+                    <li>Do NOT mention crypto/USDT in payment remarks</li>
+                    <li>Take screenshot after payment</li>
+                  </ul>
+                </div>
               </div>
             </div>
 
@@ -524,7 +714,7 @@ export default function BuyPage() {
               onClick={handleStep3Submit}
               className="w-full py-3 bg-primary hover:bg-[#5d8cff] text-white text-[13px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5"
             >
-              I have paid
+              I&apos;ve Made Payment
               <ArrowRight className="size-4" />
             </button>
           </div>
@@ -533,41 +723,15 @@ export default function BuyPage() {
         {/* Step 4: Upload Payment Proof */}
         {step === 4 && selectedSeller && (
           <div className="space-y-3 fade-in-up">
+            <div className="bg-card border border-border rounded-xl p-3 text-center">
+              <p className="text-[11px] text-muted-foreground">Upload proof of payment to</p>
+              <p className="text-[13px] font-bold text-white">{selectedSeller.name}</p>
+            </div>
+
+            {/* Screenshot Upload */}
             <div className="bg-card border border-border rounded-xl p-3">
-              <p className="text-[11px] font-semibold text-white mb-2">Upload Payment Proof</p>
-
-              {!screenshotPreview ? (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-8 border-2 border-dashed border-border rounded-xl hover:border-primary/40 transition-colors flex flex-col items-center gap-2"
-                >
-                  <div className="size-10 rounded-full bg-primary/15 flex items-center justify-center">
-                    <Upload className="size-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold text-white">Tap to upload screenshot</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">PNG, JPG up to 5MB</p>
-                  </div>
-                </button>
-              ) : (
-                <div className="relative rounded-xl overflow-hidden border border-border">
-                  <img src={screenshotPreview || "/placeholder.svg"} alt="Payment proof" className="w-full h-auto" />
-                  <button
-                    onClick={() => {
-                      setScreenshot(null);
-                      setScreenshotPreview(null);
-                    }}
-                    className="absolute top-2 right-2 size-7 bg-red-500 rounded-full flex items-center justify-center"
-                  >
-                    <X className="size-3.5 text-white" />
-                  </button>
-                  <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-card/90 rounded-full text-[9px] text-white inline-flex items-center gap-1">
-                    <ImageIcon className="size-2.5" />
-                    {screenshot?.name}
-                  </div>
-                </div>
-              )}
-
+              <label className="text-[10px] text-muted-foreground mb-2 block">Payment Screenshot</label>
+              
               <input
                 ref={fileInputRef}
                 type="file"
@@ -575,7 +739,31 @@ export default function BuyPage() {
                 onChange={handleFileChange}
                 className="hidden"
               />
-
+              
+              {screenshotPreview ? (
+                <div className="relative rounded-lg overflow-hidden mb-2">
+                  <img src={screenshotPreview} alt="Screenshot" className="w-full h-32 object-cover" />
+                  <button
+                    onClick={() => {
+                      setScreenshot(null);
+                      setScreenshotPreview(null);
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-black/50 rounded-full"
+                  >
+                    <X className="size-3 text-white" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-6 border-2 border-dashed border-border rounded-lg flex flex-col items-center gap-2 hover:border-primary/50 transition-colors"
+                >
+                  <div className="size-10 rounded-full bg-surface flex items-center justify-center">
+                    <Upload className="size-5 text-muted-foreground" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Tap to upload screenshot</p>
+                </button>
+              )}
               {errors.screenshot && (
                 <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
                   <AlertCircle className="size-3" />
@@ -584,7 +772,7 @@ export default function BuyPage() {
               )}
             </div>
 
-            {/* UTR */}
+            {/* UTR Input */}
             <div className="bg-card border border-border rounded-xl p-3">
               <label className="text-[10px] text-muted-foreground mb-2 block">UTR / Transaction ID</label>
               <input
@@ -594,10 +782,8 @@ export default function BuyPage() {
                   setUtr(e.target.value);
                   setErrors({ ...errors, utr: undefined });
                 }}
-                placeholder="Enter UTR from your payment app"
-                className={`w-full px-3 py-2.5 bg-surface border rounded-lg text-[12px] text-white placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary ${
-                  errors.utr ? "border-red-500/50" : "border-border"
-                }`}
+                placeholder="Enter 12-digit UTR number"
+                className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-[12px] text-white placeholder:text-muted-foreground/50 outline-none focus:border-primary"
               />
               {errors.utr && (
                 <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
@@ -605,9 +791,6 @@ export default function BuyPage() {
                   {errors.utr}
                 </p>
               )}
-              <p className="text-[9px] text-muted-foreground mt-1.5">
-                Find UTR in your UPI/bank app under transaction details
-              </p>
             </div>
 
             <button
@@ -616,129 +799,108 @@ export default function BuyPage() {
               className="w-full py-3 bg-primary hover:bg-[#5d8cff] text-white text-[13px] font-bold rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {isProcessing ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Submitting...
-                </>
+                <Loader2 className="size-5 animate-spin" />
               ) : (
                 <>
-                  <CheckCircle2 className="size-4" />
-                  Submit Payment Proof
+                  Submit Proof
+                  <ArrowRight className="size-4" />
                 </>
               )}
             </button>
-
-            <p className="text-[9px] text-center text-muted-foreground">
-              USDT will be released within 5 mins after seller confirms
-            </p>
           </div>
         )}
 
         {/* Step 5: Receive USDT */}
-        {step === 5 && selectedSeller && (
+        {step === 5 && (
           <div className="space-y-3 fade-in-up">
-            {!txHash ? (
-              <div className="bg-card border border-amber-500/30 rounded-xl p-5 text-center">
-                <div className="size-14 mx-auto mb-3 rounded-full bg-amber-500/15 flex items-center justify-center">
-                  <Loader2 className="size-7 text-amber-400 animate-spin" />
-                </div>
-                <h3 className="text-[14px] font-bold text-white mb-1">Waiting for seller to confirm...</h3>
-                <p className="text-[10px] text-muted-foreground">
-                  {selectedSeller.name} is verifying your payment
-                </p>
-              </div>
-            ) : (
-              <div className="bg-card border border-green-500/40 rounded-xl p-5 text-center">
-                <div className="size-14 mx-auto mb-3 rounded-full bg-green-500/15 flex items-center justify-center">
-                  <CheckCircle2 className="size-7 text-green-400" />
-                </div>
-                <h3 className="text-[15px] font-bold text-white mb-1">USDT Sent!</h3>
-                <p className="text-[11px] text-muted-foreground mb-3">
-                  {usdtAmount.toFixed(2)} USDT sent to your wallet
-                </p>
-                <div className="bg-surface rounded-lg p-2 text-left">
-                  <p className="text-[8px] text-muted-foreground mb-0.5">Transaction Hash</p>
-                  <div className="flex items-center gap-1">
-                    <p className="text-[9px] font-mono text-white truncate">{txHash}</p>
-                    <button
-                      onClick={() => copyText(txHash, "hash")}
-                      className="p-1 bg-primary/15 rounded shrink-0"
-                    >
-                      {copied === "hash" ? <Check className="size-2.5 text-primary" /> : <Copy className="size-2.5 text-primary" />}
-                    </button>
+            {/* Status */}
+            <div className="bg-card border border-border rounded-xl p-4 text-center">
+              {!txHash ? (
+                <>
+                  <Loader2 className="size-10 text-primary mx-auto mb-3 animate-spin" />
+                  <p className="text-[13px] font-bold text-white mb-1">Waiting for seller...</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Seller is verifying your payment. USDT will be sent once confirmed.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="size-14 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="size-8 text-green-400" />
                   </div>
-                </div>
-              </div>
-            )}
+                  <p className="text-[14px] font-bold text-white mb-1">Trade Completed!</p>
+                  <p className="text-[10px] text-muted-foreground mb-3">
+                    {usdtAmount.toFixed(2)} USDT has been sent to your wallet
+                  </p>
+                </>
+              )}
+            </div>
 
-            {/* Wallet Address */}
+            {/* Wallet Address Input */}
             <div className="bg-card border border-border rounded-xl p-3">
-              <label className="text-[10px] text-muted-foreground mb-2 block">Your USDT Wallet</label>
+              <label className="text-[10px] text-muted-foreground mb-2 block">Your Wallet Address</label>
               <div className="grid grid-cols-3 gap-1.5 mb-2">
                 {(["TRC20", "ERC20", "BEP20"] as const).map((n) => (
                   <button
                     key={n}
                     onClick={() => setNetwork(n)}
                     className={`py-1.5 text-[10px] font-semibold rounded-lg transition-all ${
-                      network === n ? "bg-primary text-white" : "bg-surface text-muted-foreground"
+                      network === n
+                        ? "bg-primary text-white"
+                        : "bg-surface text-muted-foreground hover:text-white"
                     }`}
                   >
                     {n}
                   </button>
                 ))}
               </div>
-              <div className="relative">
-                <Wallet className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={walletAddress}
-                  onChange={(e) => {
-                    setWalletAddress(e.target.value);
-                    setErrors({ ...errors, wallet: undefined });
-                  }}
-                  placeholder={`Your ${network} address`}
-                  className={`w-full pl-8 pr-3 py-2.5 bg-surface border rounded-lg text-[11px] text-white placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary ${
-                    errors.wallet ? "border-red-500/50" : "border-border"
-                  }`}
-                />
-              </div>
+              <input
+                type="text"
+                value={walletAddress}
+                onChange={(e) => {
+                  setWalletAddress(e.target.value);
+                  setErrors({ ...errors, wallet: undefined });
+                }}
+                placeholder={`Enter ${network} wallet address`}
+                className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-[11px] text-white placeholder:text-muted-foreground/50 outline-none focus:border-primary font-mono"
+              />
               {errors.wallet && (
                 <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
                   <AlertCircle className="size-3" />
                   {errors.wallet}
                 </p>
               )}
-              <button
-                onClick={handleConfirmWallet}
-                className="w-full mt-2 py-2 bg-primary text-white text-[11px] font-semibold rounded-full"
-              >
-                Confirm Wallet Address
-              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                href="/dashboard"
-                className="py-2.5 bg-surface text-white text-[11px] font-semibold rounded-full text-center"
-              >
-                Dashboard
-              </Link>
-              <button
-                onClick={() => {
-                  setStep(1);
-                  setAmount("");
-                  setSelectedSeller(null);
-                  setScreenshot(null);
-                  setScreenshotPreview(null);
-                  setUtr("");
-                  setTxHash("");
-                  setWalletAddress("");
-                }}
-                className="py-2.5 bg-primary text-white text-[11px] font-semibold rounded-full"
-              >
-                Buy More
-              </button>
-            </div>
+            {txHash && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-muted-foreground">Transaction Hash</span>
+                  <button
+                    onClick={() => copyText(txHash, "txhash")}
+                    className="p-1 hover:bg-green-500/20 rounded"
+                  >
+                    {copied === "txhash" ? <Check className="size-3 text-green-400" /> : <Copy className="size-3 text-green-400" />}
+                  </button>
+                </div>
+                <code className="text-[9px] text-green-400 font-mono break-all">{txHash}</code>
+              </div>
+            )}
+
+            <button
+              onClick={handleConfirmWallet}
+              className="w-full py-3 bg-primary hover:bg-[#5d8cff] text-white text-[13px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5"
+            >
+              <Wallet className="size-4" />
+              Confirm Wallet
+            </button>
+
+            <Link
+              href="/dashboard"
+              className="w-full py-3 bg-surface hover:bg-surface/80 text-white text-[12px] font-semibold rounded-full transition-all flex items-center justify-center gap-1.5"
+            >
+              Back to Dashboard
+            </Link>
           </div>
         )}
       </main>

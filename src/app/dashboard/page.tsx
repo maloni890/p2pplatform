@@ -30,25 +30,22 @@ import {
 
 interface Order {
   id: string;
+  order_number: string;
   type: "buy" | "sell";
-  amount_usdt: number;
-  amount_inr?: number;
-  status: "PENDING" | "COMPLETED" | "CANCELLED" | "INITIATED" | "PAYMENT_SENT" | "DISPUTED";
+  usdt_amount: number;
+  inr_amount: number;
+  status: string;
   created_at: string;
-  counterparty?: string;
+  seller_name?: string;
+  buyer_name?: string;
 }
 
-const DEMO_ORDERS: Order[] = [
-  { id: "ORD-2026-001", type: "sell", amount_usdt: 500, amount_inr: 53175, status: "COMPLETED", created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: "ORD-2026-002", type: "buy", amount_usdt: 1000, amount_inr: 106350, status: "PENDING", created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-  { id: "ORD-2026-003", type: "sell", amount_usdt: 750, amount_inr: 79762, status: "COMPLETED", created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: "ORD-2026-004", type: "buy", amount_usdt: 250, amount_inr: 26587, status: "CANCELLED", created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
-];
-
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
   PENDING: { label: "Pending", icon: Clock, className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-  INITIATED: { label: "Initiated", icon: Clock, className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-  PAYMENT_SENT: { label: "Payment Sent", icon: Clock, className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  ESCROW_WAITING: { label: "Escrow Waiting", icon: Clock, className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  ESCROWED: { label: "Escrowed", icon: CheckCircle2, className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  PAYMENT_PENDING: { label: "Payment Pending", icon: Clock, className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  PAYMENT_UPLOADED: { label: "Payment Uploaded", icon: Clock, className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
   COMPLETED: { label: "Completed", icon: CheckCircle2, className: "bg-green-500/15 text-green-400 border-green-500/30" },
   CANCELLED: { label: "Cancelled", icon: XCircle, className: "bg-red-500/15 text-red-400 border-red-500/30" },
   DISPUTED: { label: "Disputed", icon: AlertCircle, className: "bg-red-500/15 text-red-400 border-red-500/30" },
@@ -69,22 +66,35 @@ export default function DashboardPage() {
   });
 
   const loadData = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      const res = await api.get("/trades");
-      if (res.data && res.data.length > 0) {
-        setOrders(res.data.map((t: { id: string; is_buyer: boolean; amount_usdt: number; amount_inr?: number; status: string; created_at: string }) => ({
-          id: t.id, type: t.is_buyer ? "buy" : "sell", amount_usdt: t.amount_usdt, amount_inr: t.amount_inr, status: t.status, created_at: t.created_at,
+      // Fetch orders from our API
+      const res = await fetch(`/api/orders?userId=${user.id || user.username}`);
+      const data = await res.json();
+      
+      if (data.success && data.orders && data.orders.length > 0) {
+        setOrders(data.orders.map((o: { id: string; order_number: string; type: string; usdt_amount: number; inr_amount: number; status: string; created_at: string; seller_name?: string; buyer_name?: string }) => ({
+          id: o.id,
+          order_number: o.order_number,
+          type: o.type as "buy" | "sell",
+          usdt_amount: parseFloat(String(o.usdt_amount)),
+          inr_amount: parseFloat(String(o.inr_amount)),
+          status: o.status?.toUpperCase() || "PENDING",
+          created_at: o.created_at,
+          seller_name: o.seller_name,
+          buyer_name: o.buyer_name,
         })));
       } else {
-        setOrders(DEMO_ORDERS);
+        setOrders([]);
       }
-    } catch {
-      setOrders(DEMO_ORDERS);
+    } catch (err) {
+      console.error("Failed to load orders:", err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -255,7 +265,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-medium text-white capitalize">{order.type} USDT</p>
-                      <p className="text-[9px] text-muted-foreground">{order.amount_usdt.toLocaleString()} USDT</p>
+                      <p className="text-[9px] text-muted-foreground">{order.usdt_amount.toLocaleString()} USDT</p>
                     </div>
                     <div className="text-right">
                       <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-medium border ${statusConfig.className}`}>

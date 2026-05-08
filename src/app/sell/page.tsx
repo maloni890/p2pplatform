@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -19,6 +19,7 @@ import {
   Star,
   XCircle,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -36,22 +37,43 @@ const ESCROW_WALLET = {
 
 interface Buyer {
   id: string;
-  name: string;
-  initials: string;
-  wantsToBuy: number;
+  order_number: string;
+  buyer_id: string;
+  buyer_name: string;
+  usdt_amount: number;
+  inr_amount: number;
   rate: number;
-  completionRate: number;
-  responseTime: string;
-  trades: number;
-  verified: boolean;
+  status: string;
+  created_at: string;
 }
 
-const ACTIVE_BUYERS: Buyer[] = [
-  { id: "B001", name: "Rahul Sharma", initials: "RS", wantsToBuy: 5000, rate: 106.40, completionRate: 99.2, responseTime: "~2 min", trades: 487, verified: true },
-  { id: "B002", name: "Priya Patel", initials: "PP", wantsToBuy: 2500, rate: 106.35, completionRate: 98.5, responseTime: "~3 min", trades: 312, verified: true },
-  { id: "B003", name: "Amit Kumar", initials: "AK", wantsToBuy: 10000, rate: 106.30, completionRate: 97.8, responseTime: "~5 min", trades: 195, verified: false },
-  { id: "B004", name: "Sneha Reddy", initials: "SR", wantsToBuy: 1500, rate: 106.45, completionRate: 99.8, responseTime: "~1 min", trades: 856, verified: true },
-];
+// Loading Skeleton Component
+function BuyerSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-xl p-3 animate-pulse">
+      <div className="flex items-start gap-2.5 mb-2.5">
+        <div className="size-9 rounded-full bg-surface shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="h-3 bg-surface rounded w-24 mb-1.5" />
+          <div className="h-2 bg-surface rounded w-32" />
+        </div>
+        <div className="text-right">
+          <div className="h-4 bg-surface rounded w-12 mb-1" />
+          <div className="h-2 bg-surface rounded w-10" />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-2.5 pb-2.5 border-b border-border">
+        {[1, 2, 3].map((i) => (
+          <div key={i}>
+            <div className="h-2 bg-surface rounded w-12 mb-1" />
+            <div className="h-3 bg-surface rounded w-8" />
+          </div>
+        ))}
+      </div>
+      <div className="h-8 bg-surface rounded-full w-full" />
+    </div>
+  );
+}
 
 export default function SellPage() {
   const { user } = useAuth();
@@ -67,9 +89,16 @@ export default function SellPage() {
   const [escrowStatus, setEscrowStatus] = useState<"waiting" | "deposited" | "buyer-paid" | "released">("waiting");
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // New state for database integration
+  const [buyers, setBuyers] = useState<Buyer[]>([]);
+  const [loadingBuyers, setLoadingBuyers] = useState(false);
+  const [buyersError, setBuyersError] = useState<string | null>(null);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [liveRate, setLiveRate] = useState(RATE);
 
   const usdtNum = parseFloat(usdtAmount) || 0;
-  const grossInr = usdtNum * (selectedBuyer?.rate || RATE);
+  const grossInr = usdtNum * (selectedBuyer?.rate || liveRate);
   const platformFee = grossInr * (PLATFORM_FEE_PERCENT / 100);
   const netInr = grossInr - platformFee;
 
@@ -78,6 +107,41 @@ export default function SellPage() {
       router.push("/login?redirect=/sell");
     }
   }, [user, router]);
+
+  // Fetch buyers from database
+  const fetchBuyers = useCallback(async () => {
+    if (usdtNum <= 0) return;
+    
+    setLoadingBuyers(true);
+    setBuyersError(null);
+    
+    try {
+      const res = await fetch(`/api/buyers?minAmount=${usdtNum}`);
+      const data = await res.json();
+      
+      if (data.success) {
+        setBuyers(data.buyers);
+        // Update live rate from first buyer if available
+        if (data.buyers.length > 0) {
+          setLiveRate(parseFloat(data.buyers[0].rate));
+        }
+      } else {
+        setBuyersError("Failed to load buyers");
+      }
+    } catch (error) {
+      console.error("Error fetching buyers:", error);
+      setBuyersError("Failed to load buyers. Please try again.");
+    } finally {
+      setLoadingBuyers(false);
+    }
+  }, [usdtNum]);
+
+  // Fetch buyers when entering step 2
+  useEffect(() => {
+    if (step === 2) {
+      fetchBuyers();
+    }
+  }, [step, fetchBuyers]);
 
   // Countdown timer for step 3 & 4
   useEffect(() => {
@@ -121,8 +185,43 @@ export default function SellPage() {
 
   const handleStep1 = () => validateStep1() && setStep(2);
 
-  const handleSelectBuyer = (buyer: Buyer) => {
+  const handleSelectBuyer = async (buyer: Buyer) => {
     setSelectedBuyer(buyer);
+    setIsProcessing(true);
+    
+    // Create order in database
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyerId: buyer.buyer_id,
+          buyerName: buyer.buyer_name,
+          sellerId: null, // Will be set when seller accepts
+          sellerUserId: user?.id || user?.username,
+          sellerName: user?.name || user?.username,
+          type: "sell",
+          usdtAmount: usdtNum,
+          inrAmount: usdtNum * buyer.rate,
+          rate: buyer.rate,
+          commission: (usdtNum * buyer.rate) * (PLATFORM_FEE_PERCENT / 100),
+          paymentMethod: "UPI",
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setCurrentOrderId(data.order.id);
+        toast.success("Order created! Deposit USDT to escrow.");
+      } else {
+        toast.error("Failed to create order");
+      }
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast.error("Failed to create order");
+    }
+    
+    setIsProcessing(false);
     setStep(3);
     setEscrowStatus("waiting");
     setTimeLeft(15 * 60);
@@ -130,13 +229,41 @@ export default function SellPage() {
 
   const handleConfirmReceived = async () => {
     setIsProcessing(true);
+    
+    // Update order status in database
+    try {
+      await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: currentOrderId,
+          status: "completed",
+        }),
+      });
+    } catch (error) {
+      console.error("Error updating order:", error);
+    }
+    
     await new Promise((r) => setTimeout(r, 1500));
     setEscrowStatus("released");
     setIsProcessing(false);
     toast.success("USDT released to buyer. Trade completed!");
   };
 
-  const handleDispute = () => {
+  const handleDispute = async () => {
+    try {
+      await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: currentOrderId,
+          status: "disputed",
+          disputeReason: "Seller did not receive payment",
+        }),
+      });
+    } catch (error) {
+      console.error("Error creating dispute:", error);
+    }
     toast.error("Dispute opened. Our team will contact you within 30 minutes.");
     router.push("/profile/support");
   };
@@ -257,7 +384,7 @@ export default function SellPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
                   </span>
-                  ₹{RATE.toFixed(2)}/USDT
+                  ₹{liveRate.toFixed(2)}/USDT
                 </span>
               </div>
               <div className="h-px bg-border" />
@@ -297,7 +424,7 @@ export default function SellPage() {
           </div>
         )}
 
-        {/* Step 2: Select Buyer */}
+        {/* Step 2: Select Buyer - Now with real database calls */}
         {step === 2 && (
           <div className="space-y-3 fade-in-up">
             {/* Summary */}
@@ -315,69 +442,120 @@ export default function SellPage() {
               </p>
             </div>
 
-            {/* Buyers List */}
-            <div className="space-y-2">
-              {ACTIVE_BUYERS.filter((b) => b.wantsToBuy >= usdtNum).map((buyer) => (
-                <div
-                  key={buyer.id}
-                  className="bg-card border border-border hover:border-primary/40 rounded-xl p-3 transition-colors"
-                >
-                  <div className="flex items-start gap-2.5 mb-2.5">
-                    <div className="size-9 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                      {buyer.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <p className="text-[12px] font-semibold text-white truncate">{buyer.name}</p>
-                        {buyer.verified && (
-                          <CheckCircle2 className="size-3 text-primary shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-[9px] text-muted-foreground">
-                        Wants to buy {buyer.wantsToBuy.toLocaleString()} USDT
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[14px] font-bold text-green-400">₹{buyer.rate}</p>
-                      <p className="text-[8px] text-muted-foreground">per USDT</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 mb-2.5 pb-2.5 border-b border-border">
-                    <div>
-                      <p className="text-[8px] text-muted-foreground">Completion</p>
-                      <p className="text-[10px] font-semibold text-white">{buyer.completionRate}%</p>
-                    </div>
-                    <div>
-                      <p className="text-[8px] text-muted-foreground">Response</p>
-                      <p className="text-[10px] font-semibold text-white">{buyer.responseTime}</p>
-                    </div>
-                    <div>
-                      <p className="text-[8px] text-muted-foreground">Trades</p>
-                      <p className="text-[10px] font-semibold text-white inline-flex items-center gap-0.5">
-                        <Star className="size-2.5 text-amber-400" fill="currentColor" />
-                        {buyer.trades}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleSelectBuyer(buyer)}
-                    className="w-full py-2 bg-primary hover:bg-[#5d8cff] text-white text-[11px] font-semibold rounded-full transition-colors"
-                  >
-                    Select this Buyer
-                  </button>
-                </div>
-              ))}
-
-              {ACTIVE_BUYERS.filter((b) => b.wantsToBuy >= usdtNum).length === 0 && (
-                <div className="bg-card border border-border rounded-xl p-6 text-center">
-                  <p className="text-[11px] text-muted-foreground">
-                    No buyers available for this amount. Try a smaller amount.
-                  </p>
-                </div>
-              )}
+            {/* Refresh Button */}
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-muted-foreground">
+                {buyers.length} buyer{buyers.length !== 1 ? "s" : ""} available
+              </p>
+              <button
+                onClick={fetchBuyers}
+                disabled={loadingBuyers}
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`size-3 ${loadingBuyers ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
             </div>
+
+            {/* Loading State */}
+            {loadingBuyers && (
+              <div className="space-y-2">
+                <BuyerSkeleton />
+                <BuyerSkeleton />
+                <BuyerSkeleton />
+              </div>
+            )}
+
+            {/* Error State */}
+            {buyersError && !loadingBuyers && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                <AlertCircle className="size-8 text-red-400 mx-auto mb-2" />
+                <p className="text-[11px] text-red-400 mb-2">{buyersError}</p>
+                <button
+                  onClick={fetchBuyers}
+                  className="px-4 py-1.5 bg-red-500/20 text-red-400 text-[10px] font-semibold rounded-full hover:bg-red-500/30 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loadingBuyers && !buyersError && buyers.length === 0 && (
+              <div className="bg-card border border-border rounded-xl p-6 text-center">
+                <div className="size-12 rounded-full bg-surface flex items-center justify-center mx-auto mb-3">
+                  <User className="size-6 text-muted-foreground" />
+                </div>
+                <p className="text-[12px] font-semibold text-white mb-1">No buyers available</p>
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  No buyers are looking for this amount of USDT right now. Try a different amount or check back later.
+                </p>
+                <button
+                  onClick={() => setStep(1)}
+                  className="px-4 py-1.5 bg-primary/20 text-primary text-[10px] font-semibold rounded-full hover:bg-primary/30 transition-colors"
+                >
+                  Change Amount
+                </button>
+              </div>
+            )}
+
+            {/* Buyers List */}
+            {!loadingBuyers && !buyersError && buyers.length > 0 && (
+              <div className="space-y-2">
+                {buyers.map((buyer) => (
+                  <div
+                    key={buyer.id}
+                    className="bg-card border border-border hover:border-primary/40 rounded-xl p-3 transition-colors"
+                  >
+                    <div className="flex items-start gap-2.5 mb-2.5">
+                      <div className="size-9 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                        {buyer.buyer_name?.split(" ").map(n => n[0]).join("") || "?"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="text-[12px] font-semibold text-white truncate">{buyer.buyer_name}</p>
+                          <CheckCircle2 className="size-3 text-primary shrink-0" />
+                        </div>
+                        <p className="text-[9px] text-muted-foreground">
+                          Wants to buy {parseFloat(String(buyer.usdt_amount)).toLocaleString()} USDT
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[14px] font-bold text-green-400">₹{parseFloat(String(buyer.rate)).toFixed(2)}</p>
+                        <p className="text-[8px] text-muted-foreground">per USDT</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mb-2.5 pb-2.5 border-b border-border">
+                      <div>
+                        <p className="text-[8px] text-muted-foreground">Order ID</p>
+                        <p className="text-[10px] font-semibold text-white">{buyer.order_number}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-muted-foreground">Amount</p>
+                        <p className="text-[10px] font-semibold text-white">₹{parseFloat(String(buyer.inr_amount)).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-muted-foreground">Status</p>
+                        <p className="text-[10px] font-semibold text-amber-400 capitalize">{buyer.status}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleSelectBuyer(buyer)}
+                      disabled={isProcessing}
+                      className="w-full py-2 bg-primary hover:bg-[#5d8cff] text-white text-[11px] font-semibold rounded-full transition-colors disabled:opacity-50"
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="size-4 animate-spin mx-auto" />
+                      ) : (
+                        "Select this Buyer"
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -388,13 +566,13 @@ export default function SellPage() {
             <div className="bg-card border border-border rounded-xl p-3">
               <div className="flex items-center gap-2 mb-2">
                 <div className="size-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-[9px] font-bold">
-                  {selectedBuyer.initials}
+                  {selectedBuyer.buyer_name?.split(" ").map(n => n[0]).join("") || "?"}
                 </div>
                 <div className="flex-1">
-                  <p className="text-[11px] font-semibold text-white">{selectedBuyer.name}</p>
-                  <p className="text-[9px] text-muted-foreground">Buyer • {selectedBuyer.completionRate}% completion</p>
+                  <p className="text-[11px] font-semibold text-white">{selectedBuyer.buyer_name}</p>
+                  <p className="text-[9px] text-muted-foreground">Buyer • Order #{selectedBuyer.order_number}</p>
                 </div>
-                <p className="text-[12px] font-bold text-green-400">₹{selectedBuyer.rate}</p>
+                <p className="text-[12px] font-bold text-green-400">₹{parseFloat(String(selectedBuyer.rate)).toFixed(2)}</p>
               </div>
             </div>
 
@@ -443,7 +621,7 @@ export default function SellPage() {
                 </button>
               </div>
               <p className="text-[9px] text-amber-400 mt-2">
-                ⚠️ Only send via {network} network. Wrong network = lost funds
+                Only send via {network} network. Wrong network = lost funds
               </p>
             </div>
 
@@ -475,99 +653,83 @@ export default function SellPage() {
           </div>
         )}
 
-        {/* Step 4: Confirm Payment Received */}
+        {/* Step 4: Confirm Payment */}
         {step === 4 && selectedBuyer && (
           <div className="space-y-3 fade-in-up">
-            {escrowStatus === "released" ? (
-              <div className="bg-card border border-green-500/40 rounded-xl p-5 text-center">
-                <div className="size-14 mx-auto mb-3 rounded-full bg-green-500/15 flex items-center justify-center">
-                  <CheckCircle2 className="size-7 text-green-400" />
-                </div>
-                <h3 className="text-[15px] font-bold text-white mb-1">Trade Completed!</h3>
-                <p className="text-[11px] text-muted-foreground mb-4">
-                  ₹{netInr.toLocaleString("en-IN", { maximumFractionDigits: 2 })} credited to your bank account
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/dashboard"
-                    className="py-2.5 bg-surface text-white text-[11px] font-semibold rounded-full text-center"
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setStep(1);
-                      setUsdtAmount("");
-                      setSelectedBuyer(null);
-                      setEscrowStatus("waiting");
-                    }}
-                    className="py-2.5 bg-primary text-white text-[11px] font-semibold rounded-full"
-                  >
-                    Sell More
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {escrowStatus === "buyer-paid" && (
               <>
-                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 className="size-5 text-green-400" />
-                    <p className="text-[13px] font-bold text-white">Buyer has paid</p>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mb-3">
-                    {selectedBuyer.name} has paid ₹{netInr.toLocaleString("en-IN", { maximumFractionDigits: 2 })} to your UPI
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
+                  <CheckCircle2 className="size-10 text-green-400 mx-auto mb-2" />
+                  <p className="text-[13px] font-bold text-white mb-1">Buyer claims payment sent!</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Check your bank/UPI for ₹{(usdtNum * selectedBuyer.rate).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                   </p>
+                </div>
 
-                  {/* Mock Payment Screenshot */}
-                  <div className="bg-card rounded-lg p-3 mb-2">
-                    <p className="text-[9px] text-muted-foreground mb-1">Payment Screenshot</p>
-                    <div className="aspect-[3/2] bg-gradient-to-br from-green-500/20 to-primary/10 rounded-md flex items-center justify-center">
-                      <div className="text-center">
-                        <CheckCircle2 className="size-8 text-green-400 mx-auto mb-1" />
-                        <p className="text-[10px] font-semibold text-white">UPI Payment</p>
-                        <p className="text-[14px] font-bold text-green-400">₹{netInr.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</p>
-                        <p className="text-[8px] text-muted-foreground mt-1">UTR: 4XXXXX{Math.floor(Math.random() * 10000)}</p>
-                      </div>
+                <div className="bg-card border border-border rounded-xl p-3">
+                  <p className="text-[10px] text-muted-foreground mb-2">Trade Details</p>
+                  <div className="space-y-2 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">USDT Sold</span>
+                      <span className="text-white font-semibold">{usdtAmount} USDT</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Rate</span>
+                      <span className="text-white">₹{parseFloat(String(selectedBuyer.rate)).toFixed(2)}/USDT</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Platform Fee</span>
+                      <span className="text-red-400">- ₹{platformFee.toFixed(2)}</span>
+                    </div>
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-white">You Receive</span>
+                      <span className="font-bold text-green-400">₹{netInr.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
-
-                  <p className="text-[9px] text-muted-foreground">
-                    Verify payment in your bank/UPI app before confirming
-                  </p>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <button
-                    onClick={handleConfirmReceived}
-                    disabled={isProcessing}
-                    className="w-full py-3 bg-green-500 hover:bg-green-400 text-white text-[12px] font-bold rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        Releasing USDT...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="size-4" />
-                        Yes, I received payment
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleDispute}
-                    className="w-full py-3 bg-red-500/15 border border-red-500/30 text-red-400 text-[12px] font-bold rounded-full transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <XCircle className="size-4" />
-                    Payment not received
-                  </button>
-                </div>
+                <button
+                  onClick={handleConfirmReceived}
+                  disabled={isProcessing}
+                  className="w-full py-3 bg-green-500 hover:bg-green-400 text-white text-[13px] font-bold rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="size-5 animate-spin" />
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4" />
+                      Payment Received - Release USDT
+                    </>
+                  )}
+                </button>
 
-                <p className="text-[9px] text-center text-muted-foreground">
-                  Confirming releases {usdtAmount} USDT from escrow to buyer
-                </p>
+                <button
+                  onClick={handleDispute}
+                  className="w-full py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-[12px] font-semibold rounded-full transition-colors hover:bg-red-500/20 flex items-center justify-center gap-1.5"
+                >
+                  <XCircle className="size-4" />
+                  Open Dispute
+                </button>
               </>
+            )}
+
+            {escrowStatus === "released" && (
+              <div className="bg-card border border-green-500/30 rounded-xl p-6 text-center">
+                <div className="size-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="size-10 text-green-400" />
+                </div>
+                <p className="text-[16px] font-bold text-white mb-2">Trade Completed!</p>
+                <p className="text-[11px] text-muted-foreground mb-4">
+                  {usdtAmount} USDT released to buyer. ₹{netInr.toLocaleString("en-IN", { maximumFractionDigits: 2 })} credited to your account.
+                </p>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-[#5d8cff] text-white text-[12px] font-semibold rounded-full transition-colors"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
             )}
           </div>
         )}
@@ -598,4 +760,3 @@ export default function SellPage() {
     </div>
   );
 }
-
