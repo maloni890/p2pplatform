@@ -136,9 +136,25 @@ export default function HomePage() {
             </div>
 
             {/* Subtext */}
-            <p className="fade-in-up delay-300 text-[13px] text-muted-foreground mb-8 px-4">
+            <p className="fade-in-up delay-300 text-[13px] text-muted-foreground mb-6 px-4">
               India&apos;s most trusted P2P platform for instant USDT to INR conversion with zero fees
             </p>
+
+            {/* CTA Buttons */}
+            <div className="fade-in-up delay-400 flex gap-3 mb-10 px-4">
+              <Link
+                href="/register"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-primary hover:bg-[#5d8cff] text-white font-semibold rounded-full transition-all"
+              >
+                Get Started
+              </Link>
+              <Link
+                href="/calculator"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-transparent border border-white/30 hover:border-white/50 hover:bg-white/5 text-white font-semibold rounded-full transition-all"
+              >
+                Learn More
+              </Link>
+            </div>
 
             {/* Feature Tags - Scrolling */}
             <div className="fade-in-up delay-500 overflow-hidden mb-12">
