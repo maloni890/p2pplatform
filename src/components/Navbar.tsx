@@ -62,7 +62,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="nav-logo">
             <Image
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="SwapEase"
               width={36}
               height={36}

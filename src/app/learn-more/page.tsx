@@ -59,7 +59,7 @@ export default function LearnMorePage() {
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 mb-4">
               <Image
-                src="/logo.jpeg"
+                src="/logo.png"
                 alt="SwapEase"
                 width={48}
                 height={48}

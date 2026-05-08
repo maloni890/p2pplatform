@@ -83,7 +83,7 @@ export default function LoginPage() {
         <div className="text-center mb-8 fade-in-up">
           <Link href="/" className="inline-flex items-center gap-2">
             <Image
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="SwapEase"
               width={44}
               height={44}

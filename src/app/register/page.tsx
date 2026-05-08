@@ -109,7 +109,7 @@ export default function RegisterPage() {
         <div className="text-center mb-6 fade-in-up">
           <Link href="/" className="inline-flex items-center gap-2">
             <Image
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="SwapEase"
               width={44}
               height={44}

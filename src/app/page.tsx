@@ -107,7 +107,7 @@ export default function HomePage() {
             <div className="fade-in-up mb-5">
               <div className="inline-flex items-center gap-2">
                 <Image
-                  src="/logo.jpeg"
+                  src="/logo.png"
                   alt="SwapEase"
                   width={40}
                   height={40}
@@ -419,7 +419,7 @@ export default function HomePage() {
           {/* Logo and Tagline */}
           <div className="flex items-center gap-2 mb-4 justify-center">
             <Image
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="SwapEase"
               width={32}
               height={32}
