@@ -7,9 +7,7 @@ import { useAuth, api } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Zap,
-  Landmark,
   TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   ArrowDownRight,
   Clock,
@@ -20,10 +18,14 @@ import {
   Calculator,
   LayoutDashboard,
   User,
-  Wallet,
   RefreshCw,
   ChevronRight,
   Star,
+  Store,
+  Repeat,
+  PiggyBank,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 interface Order {
@@ -37,10 +39,10 @@ interface Order {
 }
 
 const DEMO_ORDERS: Order[] = [
-  { id: "ORD-2026-001", type: "sell", amount_usdt: 500, amount_inr: 46225, status: "COMPLETED", created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: "ORD-2026-002", type: "buy", amount_usdt: 1000, amount_inr: 92450, status: "PENDING", created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-  { id: "ORD-2026-003", type: "sell", amount_usdt: 750, amount_inr: 69337, status: "COMPLETED", created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: "ORD-2026-004", type: "buy", amount_usdt: 250, amount_inr: 23112, status: "CANCELLED", created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
+  { id: "ORD-2026-001", type: "sell", amount_usdt: 500, amount_inr: 53175, status: "COMPLETED", created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+  { id: "ORD-2026-002", type: "buy", amount_usdt: 1000, amount_inr: 106350, status: "PENDING", created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+  { id: "ORD-2026-003", type: "sell", amount_usdt: 750, amount_inr: 79762, status: "COMPLETED", created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+  { id: "ORD-2026-004", type: "buy", amount_usdt: 250, amount_inr: 26587, status: "CANCELLED", created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() },
 ];
 
 const STATUS_CONFIG = {
@@ -59,7 +61,12 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [stats] = useState({ balance: 45678.50, totalDeposited: 15000, totalWithdrawn: 125000, status: "Standard" as "Standard" | "VIP" });
+  const [stats] = useState({
+    totalTrades: 24,
+    commissionSaved: 1850,
+    status: "Standard" as "Standard" | "VIP",
+    sellerStatus: "none" as "none" | "pending" | "verified" | "rejected",
+  });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -124,51 +131,85 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* Balance Card */}
-        <div className="bg-card border border-primary/30 rounded-xl p-4 mb-4 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Wallet className="size-3.5 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground">Available INR Balance</span>
-            </div>
-            <p className="text-2xl font-bold text-white mb-4 font-stat">
-              ₹{stats.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Link
-                href="/sell"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary hover:bg-[#5d8cff] text-white text-sm font-semibold rounded-full transition-all"
-              >
-                <Zap className="size-3.5" />
-                Sell USDT
-              </Link>
-              <Link
-                href="/buy"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-transparent border border-white/30 hover:border-white/50 text-white text-sm font-semibold rounded-full transition-all"
-              >
-                <Landmark className="size-3.5" />
-                Buy USDT
-              </Link>
-            </div>
-          </div>
+        {/* P2P Marketplace Banner */}
+        <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
+          <Repeat className="size-3.5 text-primary shrink-0" />
+          <p className="text-[10px] text-white">
+            <span className="font-semibold">P2P Marketplace</span>
+            <span className="text-muted-foreground"> - Direct user-to-user trades</span>
+          </p>
         </div>
 
-        {/* Stats Row */}
+        {/* Two Action Cards Side by Side */}
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="bg-card border border-border rounded-lg p-3">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <TrendingUp className="size-3 text-primary" />
-              <span className="text-[9px] text-muted-foreground">Deposited</span>
+          {/* SELL USDT Card - Green Accent */}
+          <Link
+            href="/sell"
+            className="bg-card border border-green-500/30 rounded-xl p-3 relative overflow-hidden hover:border-green-500/50 transition-all group"
+          >
+            <div className="absolute top-0 right-0 w-20 h-20 bg-green-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="size-8 rounded-full bg-green-500/15 flex items-center justify-center mb-2">
+                <ArrowUpRight className="size-4 text-green-400" />
+              </div>
+              <h3 className="text-[12px] font-bold text-white mb-0.5">Sell USDT</h3>
+              <p className="text-[9px] text-muted-foreground mb-3 leading-tight">
+                Got USDT? Sell to buyers
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-green-400 inline-flex items-center gap-1">
+                  Sell USDT
+                  <Zap className="size-2.5" />
+                </span>
+                <ArrowRight className="size-3 text-green-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </div>
-            <p className="text-[14px] font-bold text-white font-stat">{stats.totalDeposited.toLocaleString()} USDT</p>
+          </Link>
+
+          {/* BUY USDT Card - Blue Accent */}
+          <Link
+            href="/buy"
+            className="bg-card border border-primary/30 rounded-xl p-3 relative overflow-hidden hover:border-primary/50 transition-all group"
+          >
+            <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="size-8 rounded-full bg-primary/15 flex items-center justify-center mb-2">
+                <ArrowDownRight className="size-4 text-primary" />
+              </div>
+              <h3 className="text-[12px] font-bold text-white mb-0.5">Buy USDT</h3>
+              <p className="text-[9px] text-muted-foreground mb-3 leading-tight">
+                Need USDT? Buy from sellers
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-primary">
+                  Buy USDT
+                </span>
+                <ArrowRight className="size-3 text-primary group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Stats Row - 3 Columns */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-card border border-border rounded-lg p-2.5">
+            <div className="flex items-center gap-1 mb-0.5">
+              <TrendingUp className="size-2.5 text-primary" />
+              <span className="text-[8px] text-muted-foreground">Total Trades</span>
+            </div>
+            <p className="text-[14px] font-bold text-white font-stat">{stats.totalTrades}</p>
           </div>
-          <div className="bg-card border border-border rounded-lg p-3">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <Star className={`size-3 ${stats.status === "VIP" ? "text-amber-400" : "text-muted-foreground"}`} />
-              <span className="text-[9px] text-muted-foreground">Status</span>
+          <div className="bg-card border border-border rounded-lg p-2.5">
+            <div className="flex items-center gap-1 mb-0.5">
+              <PiggyBank className="size-2.5 text-green-400" />
+              <span className="text-[8px] text-muted-foreground">Saved</span>
+            </div>
+            <p className="text-[14px] font-bold text-green-400 font-stat">₹{stats.commissionSaved}</p>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-2.5">
+            <div className="flex items-center gap-1 mb-0.5">
+              <Star className={`size-2.5 ${stats.status === "VIP" ? "text-amber-400" : "text-muted-foreground"}`} />
+              <span className="text-[8px] text-muted-foreground">Status</span>
             </div>
             <p className={`text-[14px] font-bold font-stat ${stats.status === "VIP" ? "text-amber-400" : "text-white"}`}>
               {stats.status}
@@ -177,7 +218,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden mb-4">
           <div className="flex items-center justify-between p-3 border-b border-border">
             <h2 className="font-semibold text-white text-[13px]">Recent Orders</h2>
             <Link href="/profile/orders" className="text-[10px] text-primary font-medium flex items-center gap-0.5 hover:underline">
@@ -228,6 +269,52 @@ export default function DashboardPage() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Become a Seller Section */}
+        <div className="bg-card border-2 border-amber-500/40 rounded-xl p-4 relative overflow-hidden">
+          {/* Gold glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          
+          <div className="relative">
+            <div className="flex items-start gap-2.5 mb-3">
+              <div className="size-9 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+                <Store className="size-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[13px] font-bold text-white mb-0.5">
+                  Want to list your USDT for sale?
+                </h3>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Complete seller verification to start earning from your USDT
+                </p>
+              </div>
+            </div>
+
+            {/* Bonus Badge */}
+            <div className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full mb-3">
+              <Sparkles className="size-2.5 text-amber-400" />
+              <span className="text-[9px] font-semibold text-amber-400">
+                Verified Sellers earn extra 0.2% bonus
+              </span>
+            </div>
+
+            <Link
+              href="/seller-kyc"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-[12px] font-bold rounded-full transition-all"
+            >
+              Apply as Seller
+              <ArrowRight className="size-3.5" />
+            </Link>
+
+            {stats.sellerStatus !== "none" && (
+              <div className="mt-2 text-center">
+                <span className="text-[9px] text-muted-foreground">
+                  Status: <span className="text-amber-400 font-semibold capitalize">{stats.sellerStatus}</span>
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
