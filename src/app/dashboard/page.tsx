@@ -108,48 +108,48 @@ export default function DashboardPage() {
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.1)_0%,transparent_70%)] pointer-events-none" />
       <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(77,124,254,0.1)_0%,transparent_70%)] pointer-events-none" />
 
-      <main className="flex-1 w-full max-w-[390px] mx-auto px-4 py-6 relative z-10" data-testid="dashboard-page">
+      <main className="flex-1 w-full max-w-[390px] mx-auto px-3 py-4 relative z-10" data-testid="dashboard-page">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-muted-foreground text-[13px]">Hi</p>
-            <h1 className="text-xl font-bold text-white">{user?.name || user?.username || "User"}</h1>
+            <p className="text-muted-foreground text-[11px]">Hi</p>
+            <h1 className="text-lg font-bold text-white">{user?.name || user?.username || "User"}</h1>
           </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="p-2 hover:bg-surface rounded-lg transition-colors disabled:opacity-50"
+            className="p-1.5 hover:bg-surface rounded-lg transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`size-5 text-muted-foreground ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`size-4 text-muted-foreground ${refreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
 
         {/* Balance Card */}
-        <div className="bg-card border border-primary/30 rounded-2xl p-5 mb-5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="bg-card border border-primary/30 rounded-xl p-4 mb-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative">
-            <div className="flex items-center gap-2 mb-2">
-              <Wallet className="size-4 text-muted-foreground" />
-              <span className="text-[12px] text-muted-foreground">Available INR Balance</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Wallet className="size-3.5 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">Available INR Balance</span>
             </div>
-            <p className="text-3xl font-bold text-white mb-5 font-stat">
+            <p className="text-2xl font-bold text-white mb-4 font-stat">
               ₹{stats.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </p>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Link
                 href="/sell"
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-[#5d8cff] text-white font-semibold rounded-full transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary hover:bg-[#5d8cff] text-white text-sm font-semibold rounded-full transition-all"
               >
-                <Zap className="size-4" />
+                <Zap className="size-3.5" />
                 Sell USDT
               </Link>
               <Link
                 href="/buy"
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-transparent border border-white/30 hover:border-white/50 text-white font-semibold rounded-full transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-transparent border border-white/30 hover:border-white/50 text-white text-sm font-semibold rounded-full transition-all"
               >
-                <Landmark className="size-4" />
+                <Landmark className="size-3.5" />
                 Buy USDT
               </Link>
             </div>
@@ -157,42 +157,42 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="size-4 text-primary" />
-              <span className="text-[11px] text-muted-foreground">Deposited</span>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="bg-card border border-border rounded-lg p-3">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <TrendingUp className="size-3 text-primary" />
+              <span className="text-[9px] text-muted-foreground">Deposited</span>
             </div>
-            <p className="text-lg font-bold text-white font-stat">{stats.totalDeposited.toLocaleString()} USDT</p>
+            <p className="text-[14px] font-bold text-white font-stat">{stats.totalDeposited.toLocaleString()} USDT</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Star className={`size-4 ${stats.status === "VIP" ? "text-amber-400" : "text-muted-foreground"}`} />
-              <span className="text-[11px] text-muted-foreground">Status</span>
+          <div className="bg-card border border-border rounded-lg p-3">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <Star className={`size-3 ${stats.status === "VIP" ? "text-amber-400" : "text-muted-foreground"}`} />
+              <span className="text-[9px] text-muted-foreground">Status</span>
             </div>
-            <p className={`text-lg font-bold font-stat ${stats.status === "VIP" ? "text-amber-400" : "text-white"}`}>
+            <p className={`text-[14px] font-bold font-stat ${stats.status === "VIP" ? "text-amber-400" : "text-white"}`}>
               {stats.status}
             </p>
           </div>
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="font-semibold text-white text-[15px]">Recent Orders</h2>
-            <Link href="/profile/orders" className="text-[12px] text-primary font-medium flex items-center gap-1 hover:underline">
-              View All <ChevronRight className="size-4" />
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between p-3 border-b border-border">
+            <h2 className="font-semibold text-white text-[13px]">Recent Orders</h2>
+            <Link href="/profile/orders" className="text-[10px] text-primary font-medium flex items-center gap-0.5 hover:underline">
+              View All <ChevronRight className="size-3" />
             </Link>
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin size-8 border-4 border-primary border-t-transparent rounded-full" />
+            <div className="flex justify-center py-8">
+              <div className="animate-spin size-6 border-3 border-primary border-t-transparent rounded-full" />
             </div>
           ) : orders.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-muted-foreground text-[13px] mb-4">No orders yet</p>
-              <Link href="/buy" className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-[13px] font-semibold rounded-full">
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground text-[11px] mb-3">No orders yet</p>
+              <Link href="/buy" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-[11px] font-semibold rounded-full">
                 Start Trading
               </Link>
             </div>
@@ -204,24 +204,24 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={order.id}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-surface/50 cursor-pointer transition-colors"
+                    className="flex items-center gap-2 px-3 py-2.5 hover:bg-surface/50 cursor-pointer transition-colors"
                     onClick={() => router.push(`/trade/${order.id}`)}
                   >
-                    <div className={`size-9 rounded-full flex items-center justify-center ${
+                    <div className={`size-7 rounded-full flex items-center justify-center ${
                       order.type === "buy" ? "bg-primary/15 text-primary" : "bg-green-500/15 text-green-400"
                     }`}>
-                      {order.type === "buy" ? <ArrowDownRight className="size-4" /> : <ArrowUpRight className="size-4" />}
+                      {order.type === "buy" ? <ArrowDownRight className="size-3" /> : <ArrowUpRight className="size-3" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-white capitalize">{order.type} USDT</p>
-                      <p className="text-[11px] text-muted-foreground">{order.amount_usdt.toLocaleString()} USDT</p>
+                      <p className="text-[11px] font-medium text-white capitalize">{order.type} USDT</p>
+                      <p className="text-[9px] text-muted-foreground">{order.amount_usdt.toLocaleString()} USDT</p>
                     </div>
                     <div className="text-right">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium border ${statusConfig.className}`}>
-                        <StatusIcon className="size-3" />
+                      <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-medium border ${statusConfig.className}`}>
+                        <StatusIcon className="size-2.5" />
                         {statusConfig.label}
                       </span>
-                      <p className="text-[10px] text-muted-foreground mt-1">{formatDate(order.created_at)}</p>
+                      <p className="text-[8px] text-muted-foreground mt-0.5">{formatDate(order.created_at)}</p>
                     </div>
                   </div>
                 );
@@ -243,12 +243,12 @@ export default function DashboardPage() {
             <Link
               key={label}
               href={href}
-              className={`flex flex-col items-center gap-1 px-4 py-2 transition-colors ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 transition-colors ${
                 isActive(href) ? "text-primary" : "text-muted-foreground hover:text-white"
               }`}
             >
-              <Icon className="size-5" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <Icon className="size-4" />
+              <span className="text-[8px] font-medium">{label}</span>
             </Link>
           ))}
         </div>

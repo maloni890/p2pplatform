@@ -405,7 +405,7 @@
 
   /* Bottom nav */
   .bottom-nav {
-    height: 56px;
+    height: 48px;
     background: rgba(19, 19, 31, 0.95);
     backdrop-filter: blur(10px);
   }
