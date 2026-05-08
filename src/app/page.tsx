@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Zap,
   Shield,
@@ -104,10 +105,14 @@ export default function HomePage() {
           <div className="text-center">
             {/* Logo */}
             <div className="fade-in-up mb-5">
-              <div className="inline-flex items-center gap-1.5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xs">SE</span>
-                </div>
+              <div className="inline-flex items-center gap-2">
+                <Image
+                  src="/logo.jpeg"
+                  alt="SwapEase"
+                  width={40}
+                  height={40}
+                  className="rounded-lg"
+                />
                 <span className="text-white font-bold text-lg">SwapEase</span>
               </div>
             </div>
@@ -413,9 +418,13 @@ export default function HomePage() {
         <div className="w-full max-w-[390px] mx-auto">
           {/* Logo and Tagline */}
           <div className="flex items-center gap-2 mb-4 justify-center">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">SE</span>
-            </div>
+            <Image
+              src="/logo.jpeg"
+              alt="SwapEase"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
             <span className="text-white font-bold">SwapEase</span>
           </div>
           <p className="text-center text-xs text-muted-foreground mb-6">

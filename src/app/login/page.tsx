@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Mail, Phone, Lock } from "lucide-react";
@@ -81,9 +82,13 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8 fade-in-up">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-sm">SE</span>
-            </div>
+            <Image
+              src="/logo.jpeg"
+              alt="SwapEase"
+              width={44}
+              height={44}
+              className="rounded-xl"
+            />
             <span className="text-white font-bold text-xl">SwapEase</span>
           </Link>
         </div>

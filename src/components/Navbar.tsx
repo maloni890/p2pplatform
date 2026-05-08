@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth, api } from "@/contexts/AuthContext";
 import {
@@ -59,10 +60,14 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-[62px]">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0" data-testid="nav-logo">
-            <div className="size-8 rounded-xl bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xs">SE</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="nav-logo">
+            <Image
+              src="/logo.jpeg"
+              alt="SwapEase"
+              width={36}
+              height={36}
+              className="rounded-xl"
+            />
             <span className="font-bold text-[17px] tracking-tight text-white">SwapEase</span>
           </Link>
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   Shield,
@@ -57,9 +58,13 @@ export default function LearnMorePage() {
         <section className="scroll-animate opacity-0 translate-y-4 transition-all duration-500">
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold">SE</span>
-              </div>
+              <Image
+                src="/logo.jpeg"
+                alt="SwapEase"
+                width={48}
+                height={48}
+                className="rounded-xl shadow-lg"
+              />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Welcome to SwapEase</h2>
             <p className="text-muted-foreground text-sm">
