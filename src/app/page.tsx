@@ -105,7 +105,7 @@ export default function HomePage() {
           <div className="text-center">
             {/* Logo */}
             <div className="fade-in-up mb-5">
-              <div className="inline-flex items-center gap-2">
+              <div className="inline-flex items-center gap-1">
                 <Image
                   src="/logo.png"
                   alt="SwapEase"
@@ -113,7 +113,7 @@ export default function HomePage() {
                   height={80}
                   className="rounded-xl"
                 />
-                <span className="text-white font-bold text-lg">SwapEase</span>
+                <span className="text-white font-bold text-2xl">SwapEase</span>
               </div>
             </div>
 
