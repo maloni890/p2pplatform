@@ -64,9 +64,9 @@ export default function Navbar() {
             <Image
               src="/logo.png"
               alt="SwapEase"
-              width={36}
-              height={36}
-              className="rounded-xl"
+              width={72}
+              height={72}
+              className="rounded-2xl"
             />
             <span className="font-bold text-[17px] tracking-tight text-white">SwapEase</span>
           </Link>

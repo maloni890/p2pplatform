@@ -109,9 +109,9 @@ export default function HomePage() {
                 <Image
                   src="/logo.png"
                   alt="SwapEase"
-                  width={40}
-                  height={40}
-                  className="rounded-lg"
+                  width={80}
+                  height={80}
+                  className="rounded-xl"
                 />
                 <span className="text-white font-bold text-lg">SwapEase</span>
               </div>
@@ -421,9 +421,9 @@ export default function HomePage() {
             <Image
               src="/logo.png"
               alt="SwapEase"
-              width={32}
-              height={32}
-              className="rounded-lg"
+              width={64}
+              height={64}
+              className="rounded-xl"
             />
             <span className="text-white font-bold">SwapEase</span>
           </div>

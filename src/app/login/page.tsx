@@ -85,9 +85,9 @@ export default function LoginPage() {
             <Image
               src="/logo.png"
               alt="SwapEase"
-              width={44}
-              height={44}
-              className="rounded-xl"
+              width={88}
+              height={88}
+              className="rounded-2xl"
             />
             <span className="text-white font-bold text-xl">SwapEase</span>
           </Link>

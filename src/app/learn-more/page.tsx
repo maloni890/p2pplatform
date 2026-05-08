@@ -61,9 +61,9 @@ export default function LearnMorePage() {
               <Image
                 src="/logo.png"
                 alt="SwapEase"
-                width={48}
-                height={48}
-                className="rounded-xl shadow-lg"
+                width={96}
+                height={96}
+                className="rounded-2xl shadow-lg"
               />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Welcome to SwapEase</h2>
