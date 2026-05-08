@@ -360,6 +360,25 @@
     100% { transform: translateX(-50%); }
   }
 
+  /* Live trades vertical scroll */
+  .live-trades-scroll {
+    animation: scroll-trades 15s linear infinite;
+  }
+
+  @keyframes scroll-trades {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Particle animation */
   .particle {
     position: absolute;
