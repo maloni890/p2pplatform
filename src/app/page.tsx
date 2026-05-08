@@ -149,7 +149,7 @@ export default function HomePage() {
                 Get Started
               </Link>
               <Link
-                href="/calculator"
+                href="/learn-more"
                 className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-transparent border border-white/30 hover:border-white/50 hover:bg-white/5 text-white font-semibold rounded-full transition-all"
               >
                 Learn More
@@ -398,7 +398,7 @@ export default function HomePage() {
                   <ExternalLink className="size-4" />
                 </Link>
                 <Link
-                  href="/calculator"
+                  href="/learn-more"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-transparent border border-white/20 hover:border-white/40 text-white font-semibold rounded-full transition-colors"
                 >
                   Learn More
