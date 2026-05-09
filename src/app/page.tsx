@@ -1,325 +1,405 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import {
-  Shield,
-  Zap,
-  Globe,
-  ChevronRight,
-  CheckCircle,
-  ArrowRight,
-  TrendingUp,
-  Users,
-  Lock,
-  Star,
-} from "lucide-react";
-import axios from "axios";
+import { Shield, Zap, Lock, Users, Percent, Layers, ChevronDown, Menu, X } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-
-interface Stats { total_offers: number; total_volume_inr: number; payment_methods: number; }
-interface Trader { rank: number; username: string; is_verified_trader: boolean; completion_rate: number; completed_trades: number; volume_usdt: number; }
-
-const DEMO_STATS: Stats = { total_offers: 1240, total_volume_inr: 48500000, payment_methods: 12 };
-const DEMO_TRADERS: Trader[] = [
-  { rank: 1, username: "cryptoking", is_verified_trader: true, completion_rate: 99, completed_trades: 3420, volume_usdt: 980000 },
-  { rank: 2, username: "usdtpro", is_verified_trader: true, completion_rate: 98, completed_trades: 2180, volume_usdt: 640000 },
-  { rank: 3, username: "tradervault", is_verified_trader: true, completion_rate: 97, completed_trades: 1760, volume_usdt: 510000 },
-  { rank: 4, username: "swiftexchange", is_verified_trader: false, completion_rate: 96, completed_trades: 890, volume_usdt: 220000 },
-  { rank: 5, username: "blockdealer", is_verified_trader: false, completion_rate: 95, completed_trades: 654, volume_usdt: 180000 },
+const FEATURES = [
+  { icon: Users, title: "P2P Trading", desc: "Trade directly with verified sellers. No intermediary." },
+  { icon: Zap, title: "Instant Settlement", desc: "INR hits your bank in minutes via UPI/IMPS." },
+  { icon: Lock, title: "Escrow Protected", desc: "USDT locked safely until payment confirmed." },
+  { icon: Shield, title: "Verified Sellers", desc: "KYC-verified traders with completion ratings." },
+  { icon: Percent, title: "Zero Hidden Fees", desc: "0.3% only. No deposit or withdrawal fees." },
+  { icon: Layers, title: "Multi-Network", desc: "TRC20, ERC20, BEP20 supported." },
 ];
 
-export default function HomePage() {
-  const [stats, setStats] = useState<Stats>(DEMO_STATS);
-  const [topTraders, setTopTraders] = useState<Trader[]>(DEMO_TRADERS);
+const STEPS = [
+  { num: "01", title: "Post or Browse", desc: "Browse verified seller ads or post your own. Filter by rate, payment method, and amount." },
+  { num: "02", title: "Trade with Escrow", desc: "USDT locked in escrow. Pay INR directly to seller via UPI or bank transfer." },
+  { num: "03", title: "Confirm & Release", desc: "Upload payment proof. Seller confirms and USDT releases to your wallet instantly." },
+];
+
+const NETWORKS = [
+  { name: "TRON", type: "TRC20", color: "#ff0013" },
+  { name: "Ethereum", type: "ERC20", color: "#627eea" },
+  { name: "BNB Chain", type: "BEP20", color: "#4d7cfe" },
+];
+
+export default function LandingPage() {
+  const [currentRate] = useState(106.35);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
 
   useEffect(() => {
-    axios.get(`${API}/api/stats`).then((r) => setStats(r.data)).catch(() => {});
-    axios.get(`${API}/api/top-traders?days=90&limit=5`).then((r) => setTopTraders(r.data)).catch(() => {});
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisibleSections((prev) => new Set([...prev, entry.target.id]));
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    Object.values(sectionRefs.current).forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const setSectionRef = (id: string) => (el: HTMLElement | null) => {
+    sectionRefs.current[id] = el;
+  };
+
+  const isVisible = (id: string) => visibleSections.has(id);
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-[#0d1117]" style={{ fontFamily: "Inter, -apple-system, sans-serif" }}>
+      {/* Navbar */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 h-14 px-5 flex items-center justify-between transition-all duration-200 ${
+          scrolled ? "bg-[#0d1117]/95 backdrop-blur-sm border-b border-[#21262d]" : "bg-transparent"
+        }`}
+      >
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-[#4d7cfe] rounded-md flex items-center justify-center">
+            <span className="text-black text-xs font-bold">SE</span>
+          </div>
+          <span className="text-[#f0f6fc] text-base font-semibold">SwapEase</span>
+        </Link>
 
-      {/* ── Hero ─────────────────────────────────────── */}
-      <section className="relative px-4 pt-20 pb-28 overflow-hidden">
-        {/* Background accent — teal shimmer */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-primary/8 blur-[120px]" />
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center gap-6">
+          <a href="#features" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc] transition-colors">Features</a>
+          <Link href="/p2p" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc] transition-colors">P2P</Link>
+          <a href="#how-it-works" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc] transition-colors">About</a>
+          <Link
+            href="/register"
+            className="h-[34px] px-4 bg-[#4d7cfe] text-white text-[13px] font-semibold rounded-md flex items-center hover:bg-[#5d8cff] transition-colors"
+          >
+            Get Started
+          </Link>
         </div>
 
-        <div className="relative max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-semibold tracking-wide mb-8">
-            <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-            Non-custodial · Zero counterparty risk
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-1 text-[#f0f6fc]"
+        >
+          {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+        </button>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="absolute top-14 left-0 right-0 bg-[#0d1117] border-b border-[#21262d] p-4 md:hidden">
+            <div className="flex flex-col gap-4">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-[14px] text-[#8b949e]">Features</a>
+              <Link href="/p2p" onClick={() => setMobileMenuOpen(false)} className="text-[14px] text-[#8b949e]">P2P</Link>
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-[14px] text-[#8b949e]">About</a>
+              <Link
+                href="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-11 bg-[#4d7cfe] text-white text-[14px] font-semibold rounded-md flex items-center justify-center"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Hero Section */}
+      <section className="min-h-[85vh] pt-20 pb-16 px-5">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Column */}
+          <div className="lg:text-left text-center">
+            {/* Label Pill */}
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 bg-[#161b22] border border-[#30363d] rounded-full mb-6 animate-fade-in"
+            >
+              <span className="w-1.5 h-1.5 bg-[#3fb950] rounded-full" />
+              <span className="text-[12px] text-[#8b949e]">India&apos;s #1 Decentralized P2P Exchange</span>
+            </div>
+
+            {/* Headlines */}
+            <h1 className="text-4xl md:text-[52px] font-bold text-[#f0f6fc] leading-[1.1] mb-2 animate-fade-in animation-delay-100">
+              Buy &amp; Sell USDT
+            </h1>
+            <p className="text-2xl md:text-[40px] font-semibold text-[#4d7cfe] mb-4 animate-fade-in animation-delay-200">
+              Get INR directly in your bank
+            </p>
+
+            {/* Body Text */}
+            <p className="text-[14px] text-[#8b949e] max-w-[420px] lg:mx-0 mx-auto mb-7 leading-relaxed animate-fade-in animation-delay-300">
+              Trade USDT peer-to-peer with instant bank transfers, zero hidden fees, and the best rates in India.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex gap-3 lg:justify-start justify-center flex-wrap mb-4 animate-fade-in animation-delay-400">
+              <Link
+                href="/register"
+                className="h-11 px-6 bg-[#4d7cfe] text-white text-[14px] font-semibold rounded-md flex items-center hover:bg-[#5d8cff] transition-all"
+              >
+                Start Trading
+              </Link>
+              <Link
+                href="/p2p"
+                className="h-11 px-6 bg-transparent border border-[#30363d] text-[#f0f6fc] text-[14px] font-medium rounded-md flex items-center hover:border-[#8b949e] transition-colors"
+              >
+                View P2P Market
+              </Link>
+            </div>
+
+            {/* Trust Line */}
+            <p className="text-[12px] text-[#8b949e] animate-fade-in animation-delay-500">
+              <span className="mr-3">🔒 Non-custodial</span>
+              <span className="mr-3">·</span>
+              <span className="mr-3">✓ KYC Verified Sellers</span>
+              <span className="mr-3">·</span>
+              <span>0% Platform Fee</span>
+            </p>
           </div>
 
-          <h1 className="font-black text-5xl sm:text-6xl lg:text-[72px] leading-[1.05] tracking-tight mb-6 text-balance">
-            The fastest way to<br />
-            <span className="text-primary">buy &amp; sell USDT</span>
-          </h1>
+          {/* Right Column - Live Rate Card (Desktop Only) */}
+          <div className="hidden lg:block">
+            <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 max-w-sm ml-auto animate-fade-in animation-delay-300">
+              <p className="text-[12px] text-[#8b949e] mb-1">USDT / INR</p>
+              <div className="flex items-baseline gap-3 mb-1">
+                <span className="text-[32px] font-bold text-[#f0f6fc]">₹{currentRate.toFixed(2)}</span>
+                <span className="text-[13px] text-[#3fb950]">+₹0.31 (0.29%)</span>
+              </div>
+              
+              <div className="border-t border-[#21262d] my-4" />
+              
+              {/* Mini Order Book */}
+              <div className="space-y-1.5 font-mono text-[12px]">
+                <div className="flex justify-between text-[#3fb950]">
+                  <span>106.40</span><span>1,250.00</span>
+                </div>
+                <div className="flex justify-between text-[#3fb950]">
+                  <span>106.38</span><span>890.50</span>
+                </div>
+                <div className="flex justify-between text-[#3fb950]">
+                  <span>106.35</span><span>2,100.00</span>
+                </div>
+                <div className="h-px bg-[#30363d] my-2" />
+                <div className="flex justify-between text-[#f6465d]">
+                  <span>106.32</span><span>1,800.00</span>
+                </div>
+                <div className="flex justify-between text-[#f6465d]">
+                  <span>106.30</span><span>3,200.00</span>
+                </div>
+                <div className="flex justify-between text-[#f6465d]">
+                  <span>106.28</span><span>950.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-10">
-            Trade USDT peer-to-peer with verified traders. 12+ payment methods, escrow-protected, instant settlement. No middlemen, no delays.
+      {/* Stats Bar */}
+      <section className="bg-[#161b22] border-y border-[#21262d] py-5 px-5">
+        <div className="max-w-4xl mx-auto flex justify-between items-center overflow-x-auto gap-8">
+          <div className="text-center flex-shrink-0">
+            <p className="text-xl font-bold text-[#f0f6fc]">₹0</p>
+            <p className="text-[12px] text-[#8b949e]">Volume</p>
+          </div>
+          <div className="text-center flex-shrink-0">
+            <p className="text-xl font-bold text-[#f0f6fc]">0</p>
+            <p className="text-[12px] text-[#8b949e]">Traders</p>
+          </div>
+          <div className="text-center flex-shrink-0">
+            <p className="text-xl font-bold text-[#f0f6fc]">0</p>
+            <p className="text-[12px] text-[#8b949e]">Trades</p>
+          </div>
+          <p className="text-[11px] text-[#8b949e] flex-shrink-0">Updated live</p>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section
+        id="features"
+        ref={setSectionRef("features")}
+        className="py-16 px-5 bg-[#0d1117]"
+      >
+        <div className="max-w-5xl mx-auto">
+          <p className="text-[11px] text-[#8b949e] uppercase tracking-widest mb-2">WHY SWAPEASE</p>
+          <h2 className="text-2xl font-bold text-[#f0f6fc] mb-2">Built for serious traders</h2>
+          <p className="text-[14px] text-[#8b949e] mb-10">Everything you need to trade USDT safely in India</p>
+
+          <div
+            className={`grid md:grid-cols-3 sm:grid-cols-2 gap-4 transition-all duration-700 ${
+              isVisible("features") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
+          >
+            {FEATURES.map((feature, i) => (
+              <div
+                key={i}
+                className="bg-[#161b22] border border-[#21262d] rounded-lg p-5 hover:border-[#4d7cfe] transition-colors duration-200"
+                style={{ transitionDelay: `${i * 100}ms` }}
+              >
+                <feature.icon className="size-5 text-[#4d7cfe] mb-3" />
+                <h3 className="text-[14px] font-semibold text-[#f0f6fc] mb-1">{feature.title}</h3>
+                <p className="text-[13px] text-[#8b949e] leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How P2P Works */}
+      <section
+        id="how-it-works"
+        ref={setSectionRef("how-it-works")}
+        className="py-16 px-5 bg-[#161b22]"
+      >
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-[22px] font-bold text-[#f0f6fc] text-center mb-10">How P2P works</h2>
+
+          <div
+            className={`grid md:grid-cols-3 gap-0 transition-all duration-700 ${
+              isVisible("how-it-works") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
+          >
+            {STEPS.map((step, i) => (
+              <div
+                key={i}
+                className={`p-6 ${i < 2 ? "md:border-r border-b md:border-b-0 border-[#30363d]" : ""}`}
+              >
+                <p className="text-[11px] text-[#8b949e] font-medium mb-2">{step.num}</p>
+                <h3 className="text-[15px] font-bold text-[#f0f6fc] mb-2">{step.title}</h3>
+                <p className="text-[13px] text-[#8b949e] leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Supported Networks */}
+      <section className="py-10 px-5 bg-[#0d1117] text-center">
+        <p className="text-[11px] text-[#8b949e] uppercase tracking-widest mb-4">SUPPORTED NETWORKS</p>
+        
+        <div className="flex items-center justify-center gap-3 flex-wrap mb-3">
+          {NETWORKS.map((network) => (
+            <div
+              key={network.type}
+              className="flex items-center gap-2 px-4 py-2 bg-[#161b22] border border-[#30363d] rounded-md"
+            >
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: network.color }}
+              />
+              <span className="text-[13px] text-[#f0f6fc]">{network.name}</span>
+              <span className="text-[11px] text-[#8b949e]">{network.type}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[12px] text-[#4d7cfe]">
+          Always verify the network before sending USDT to avoid loss of funds
+        </p>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 px-5 bg-[#161b22] border-y border-[#21262d] text-center">
+        <h2 className="text-[28px] font-bold text-[#f0f6fc] mb-2">Ready to trade?</h2>
+        <p className="text-[14px] text-[#8b949e] mb-7">
+          Join SwapEase — India&apos;s trusted decentralized P2P USDT exchange
+        </p>
+
+        <div className="flex gap-3 justify-center flex-wrap">
+          <Link
+            href="/register"
+            className="h-11 px-6 bg-[#4d7cfe] text-white text-[14px] font-semibold rounded-md flex items-center hover:bg-[#5d8cff] transition-all"
+          >
+            Start Trading
+          </Link>
+          <Link
+            href="/p2p"
+            className="h-11 px-6 bg-transparent border border-[#30363d] text-[#f0f6fc] text-[14px] font-medium rounded-md flex items-center hover:border-[#8b949e] transition-colors"
+          >
+            View P2P Market
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#0d1117] border-t border-[#21262d] py-10 px-5">
+        <div className="max-w-4xl mx-auto">
+          {/* Top Row */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-[#4d7cfe] rounded-md flex items-center justify-center">
+                <span className="text-black text-xs font-bold">SE</span>
+              </div>
+              <span className="text-[#f0f6fc] text-base font-semibold">SwapEase</span>
+            </Link>
+
+            <div className="flex gap-6">
+              <Link href="/privacy" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc]">Privacy</Link>
+              <Link href="/terms" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc]">Terms</Link>
+              <Link href="/support" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc]">Support</Link>
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <p className="text-[12px] text-[#8b949e] max-w-md mb-6">
+            SwapEase is a peer-to-peer USDT exchange platform. We do not provide financial advice. Trade at your own risk.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-14">
-            <Link
-              href="/register"
-              className="flex items-center gap-2 px-7 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-lg hover:opacity-90 transition-opacity glow-teal"
-              data-testid="start-trading-btn"
-            >
-              Start Trading Free <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/buy"
-              className="flex items-center gap-2 px-7 py-3.5 border border-border text-foreground font-semibold text-sm rounded-lg hover:bg-surface transition-colors"
-            >
-              Browse Offers
-            </Link>
-          </div>
-
-          {/* Trust bar */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-            {[
-              { icon: Shield, text: "Escrow protected" },
-              { icon: Zap, text: "Under 5 min settlement" },
-              { icon: Globe, text: "12+ payment methods" },
-              { icon: Lock, text: "Non-custodial" },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-1.5">
-                <Icon className="size-4 text-primary" />
-                <span>{text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stats bar ───────────────────────────────── */}
-      <section className="border-y border-border bg-card">
-        <div className="max-w-5xl mx-auto grid grid-cols-3 divide-x divide-border">
-          {[
-            { label: "Active Offers", value: `${stats.total_offers.toLocaleString()}+`, color: "text-foreground" },
-            { label: "Volume Traded", value: `₹${(stats.total_volume_inr / 1000000).toFixed(1)}M+`, color: "text-primary" },
-            { label: "Payment Methods", value: `${stats.payment_methods}+`, color: "text-foreground" },
-          ].map((s) => (
-            <div key={s.label} className="py-10 text-center">
-              <p className={`font-stat text-3xl font-black ${s.color}`}>{s.value}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Trade USDT CTA row ──────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-16 w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="font-bold text-xl text-foreground">Trade USDT Now</h2>
-            <p className="text-muted-foreground text-sm mt-0.5">Select your direction</p>
-          </div>
-          <Link href="/buy" className="text-sm text-primary font-medium flex items-center gap-1 hover:opacity-80">
-            View all offers <ChevronRight className="size-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Buy card */}
-          <Link href="/buy" className="group relative overflow-hidden bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors">
-            <div className="absolute inset-0 bg-primary/3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="size-10 rounded-lg bg-primary/15 flex items-center justify-center">
-                  <TrendingUp className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">Buy USDT</p>
-                  <p className="text-xs text-muted-foreground">Pay INR, receive USDT</p>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">Browse verified sellers offering competitive rates. Pay via UPI, IMPS, bank transfer &amp; more.</p>
-              <div className="flex items-center gap-1.5 text-primary text-sm font-semibold">
-                Browse buy offers <ArrowRight className="size-4" />
-              </div>
-            </div>
-          </Link>
-
-          {/* Sell card */}
-          <Link href="/sell" className="group relative overflow-hidden bg-card border border-border rounded-xl p-6 hover:border-success/30 transition-colors">
-            <div className="absolute inset-0 bg-success/3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="size-10 rounded-lg bg-success/15 flex items-center justify-center">
-                  <TrendingUp className="size-5 text-success rotate-180" />
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">Sell USDT</p>
-                  <p className="text-xs text-muted-foreground">Send USDT, receive INR</p>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">Find buyers at the best rates. Get INR instantly via your preferred payment method.</p>
-              <div className="flex items-center gap-1.5 text-success text-sm font-semibold">
-                Browse sell offers <ArrowRight className="size-4" />
-              </div>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* ── Supported Networks ──────────────────────── */}
-      <section className="border-t border-border bg-card/50">
-        <div className="max-w-5xl mx-auto px-4 py-16">
-          <h2 className="font-bold text-xl text-foreground mb-6">Supported Networks</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { name: "Tron Network", short: "TRC-20", color: "#FF0013", fee: "Near-zero fees", speed: "~3 sec" },
-              { name: "Ethereum", short: "ERC-20", color: "#627EEA", fee: "Standard gas", speed: "~15 sec" },
-              { name: "BNB Chain", short: "BEP-20", color: "#F3BA2F", fee: "Low fees", speed: "~5 sec" },
-            ].map((net) => (
-              <div key={net.short} className="bg-card border border-border rounded-xl p-5 flex items-start gap-4">
-                <div className="size-10 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs" style={{ backgroundColor: net.color + "22", color: net.color }}>
-                  {net.short}
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground text-sm">{net.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{net.fee} &middot; {net.speed}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-16 w-full">
-        <div className="text-center mb-12">
-          <h2 className="font-black text-3xl text-foreground mb-3">How ChainSwap Works</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-sm leading-relaxed">Simple, transparent, and secure. Trade USDT in minutes — no KYC required for basic trades.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { step: "01", title: "Create Account", desc: "Sign up in 30 seconds. No complex verification required." },
-            { step: "02", title: "Find an Offer", desc: "Browse buy or sell offers filtered by payment method and price." },
-            { step: "03", title: "Initiate Trade", desc: "Click trade, chat with the counterparty, complete payment." },
-            { step: "04", title: "Receive USDT", desc: "USDT released from escrow to your wallet instantly." },
-          ].map((s) => (
-            <div key={s.step} className="relative">
-              <div className="text-5xl font-black text-border/60 font-stat mb-3">{s.step}</div>
-              <h4 className="font-bold text-foreground mb-1.5">{s.title}</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Why ChainSwap ───────────────────────────── */}
-      <section className="border-t border-border bg-card/50">
-        <div className="max-w-5xl mx-auto px-4 py-16">
-          <h2 className="font-bold text-xl text-foreground mb-8">Why traders choose ChainSwap</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { icon: Lock, title: "Escrow Security", desc: "USDT is locked in smart contract escrow until both parties confirm payment." },
-              { icon: Zap, title: "Lightning Fast", desc: "Most trades complete in under 5 minutes. Real-time chat keeps you informed." },
-              { icon: Users, title: "Verified Traders", desc: "Top traders are verified with badges, ratings, and full trade history." },
-              { icon: Globe, title: "12+ Payment Methods", desc: "UPI, IMPS, NEFT, Paytm, PhonePe, Google Pay, and more." },
-              { icon: Shield, title: "Dispute Resolution", desc: "24/7 dispute team resolves issues fairly. Your funds are always safe." },
-              { icon: Star, title: "Reputation System", desc: "Review your counterparty after every trade. Build trust in the community." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="bg-card border border-border rounded-xl p-5">
-                <div className="size-9 rounded-lg bg-primary/12 flex items-center justify-center mb-3">
-                  <Icon className="size-4.5 text-primary" />
-                </div>
-                <p className="font-semibold text-sm text-foreground mb-1">{title}</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Top Traders ─────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 py-16 w-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="font-bold text-xl text-foreground">Top Traders</h2>
-            <p className="text-muted-foreground text-sm mt-0.5">Most trusted members of our community</p>
-          </div>
-        </div>
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="grid grid-cols-5 px-5 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest border-b border-border">
-            <span>#</span>
-            <span className="col-span-2">Trader</span>
-            <span className="text-right">Trades</span>
-            <span className="text-right">Rate</span>
-          </div>
-          {topTraders.map((trader, i) => (
-            <Link
-              key={trader.rank}
-              href={`/user/${trader.username}`}
-              className={`grid grid-cols-5 px-5 py-3.5 items-center table-row-hover transition-colors ${i !== topTraders.length - 1 ? "border-b border-border" : ""}`}
-            >
-              <span className={`font-stat text-sm font-bold ${trader.rank === 1 ? "text-yellow-400" : trader.rank === 2 ? "text-slate-300" : trader.rank === 3 ? "text-orange-400" : "text-muted-foreground"}`}>
-                #{trader.rank}
-              </span>
-              <div className="col-span-2 flex items-center gap-2.5">
-                <div className="size-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                  {trader.username.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{trader.username}</p>
-                  {trader.is_verified_trader && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] text-primary font-medium">
-                      <CheckCircle className="size-2.5" /> Verified
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className="text-right text-sm font-stat text-foreground">{trader.completed_trades.toLocaleString()}</span>
-              <span className={`text-right text-sm font-stat font-semibold ${trader.completion_rate >= 98 ? "text-success" : "text-yellow-400"}`}>
-                {trader.completion_rate}%
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CTA banner ──────────────────────────────── */}
-      <section className="border-t border-border">
-        <div className="max-w-5xl mx-auto px-4 py-16 text-center">
-          <h2 className="font-black text-3xl sm:text-4xl text-foreground mb-4 text-balance">
-            Ready to trade USDT?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-sm">
-            Join thousands of traders. Create a free account and start trading in minutes.
-          </p>
-          <Link href="/register" className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-opacity glow-teal">
-            Create Free Account <ArrowRight className="size-4" />
-          </Link>
-        </div>
-      </section>
-
-      {/* ── Footer ──────────────────────────────────── */}
-      <footer className="border-t border-border bg-card">
-        <div className="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="size-5 rounded bg-primary/20 flex items-center justify-center">
-              <span className="text-primary text-[10px] font-bold">CS</span>
-            </div>
-            <span className="font-semibold text-foreground">ChainSwap</span>
-            <span>&copy; 2026. All rights reserved.</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <Link href="/buy" className="hover:text-foreground transition-colors">Buy USDT</Link>
-            <Link href="/sell" className="hover:text-foreground transition-colors">Sell USDT</Link>
-            <Link href="/register" className="hover:text-foreground transition-colors">Register</Link>
+          {/* Bottom Row */}
+          <div className="flex flex-wrap items-center justify-between gap-4 text-[12px] text-[#484f58]">
+            <span>© 2025 SwapEase</span>
+            <span>Built in India 🇮🇳</span>
           </div>
         </div>
       </footer>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease forwards;
+        }
+        .animation-delay-100 {
+          animation-delay: 0.1s;
+          opacity: 0;
+        }
+        .animation-delay-200 {
+          animation-delay: 0.2s;
+          opacity: 0;
+        }
+        .animation-delay-300 {
+          animation-delay: 0.3s;
+          opacity: 0;
+        }
+        .animation-delay-400 {
+          animation-delay: 0.4s;
+          opacity: 0;
+        }
+        .animation-delay-500 {
+          animation-delay: 0.5s;
+          opacity: 0;
+        }
+      `}</style>
     </div>
   );
 }

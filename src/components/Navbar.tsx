@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth, api } from "@/contexts/AuthContext";
 import {
@@ -59,11 +60,15 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-[62px]">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0" data-testid="nav-logo">
-            <div className="size-8 rounded-lg bg-primary flex items-center justify-center glow-teal">
-              <ArrowRightLeft className="size-4 text-primary-foreground" />
-            </div>
-            <span className="font-black text-[17px] tracking-tight text-foreground">ChainSwap</span>
+          <Link href="/" className="flex items-center gap-2 shrink-0" data-testid="nav-logo">
+            <Image
+              src="/logo.png"
+              alt="SwapEase"
+              width={72}
+              height={72}
+              className="rounded-2xl"
+            />
+            <span className="font-bold text-[17px] tracking-tight text-white">SwapEase</span>
           </Link>
 
           {/* Desktop nav links */}
@@ -169,7 +174,7 @@ export default function Navbar() {
                 <Link href="/login" className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-login">
                   Sign In
                 </Link>
-                <Link href="/register" className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity glow-teal" data-testid="nav-register">
+                <Link href="/register" className="px-4 py-2 bg-primary hover:bg-[#5d8cff] text-white text-sm font-semibold rounded-full transition-colors" data-testid="nav-register">
                   Get Started
                 </Link>
               </div>

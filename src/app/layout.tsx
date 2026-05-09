@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChainSwap — P2P USDT Trading",
+  title: "SwapEase — Buy & Sell USDT | Get INR Instantly",
   description:
-    "Buy and sell USDT peer-to-peer with 10+ payment methods. Fast, secure, and non-custodial.",
-  keywords: ["USDT", "P2P trading", "crypto", "buy USDT", "sell USDT", "decentralized"],
+    "India's fastest P2P USDT trading platform. Buy and sell USDT directly with INR. Instant payout, 100% secure, zero fees, best rates.",
+  keywords: ["USDT", "P2P trading", "crypto", "buy USDT", "sell USDT", "INR", "India", "instant payout"],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0A",
+  themeColor: "#0d0d1a",
   width: "device-width",
   initialScale: 1,
 };
@@ -35,9 +35,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} bg-background antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} bg-[#0d0d1a] antialiased`}
     >
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col bg-gradient-dark">
         <AuthProvider>
           {children}
           <Toaster position="top-right" richColors />

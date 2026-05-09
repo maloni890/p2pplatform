@@ -7,112 +7,78 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import axios from "axios";
-
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-const IS_DEMO = !API_BASE;
-
-// In-memory demo store (survives the session via localStorage)
-function getDemoUsers(): Record<string, User & { password: string }> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem("demo_users") || "{}");
-  } catch {
-    return {};
-  }
-}
-function saveDemoUsers(users: Record<string, User & { password: string }>) {
-  if (typeof window !== "undefined")
-    localStorage.setItem("demo_users", JSON.stringify(users));
-}
-function makeDemoUser(data: RegisterData): User & { password: string } {
-  return {
-    id: `demo_${Date.now()}`,
-    username: data.username,
-    email: data.email,
-    password: data.password,
-    role: "user",
-    wallet_address: data.wallet_address || "",
-    completion_rate: 100,
-    completed_trades: 0,
-    total_trades: 0,
-    is_verified_trader: false,
-    created_at: new Date().toISOString(),
-  };
-}
 
 export interface User {
   id: string;
-  username: string;
+  username?: string;
+  name?: string;
   email: string;
+  phone?: string;
   role: "user" | "admin";
   wallet_address?: string;
   completion_rate?: number;
   completed_trades?: number;
   total_trades?: number;
   is_verified_trader?: boolean;
+  is_phone_verified?: boolean;
+  is_email_verified?: boolean;
+  referral_code?: string;
+  my_referral_code?: string;
   created_at?: string;
+}
+
+interface RegisterData {
+  username?: string;
+  name?: string;
+  email: string;
+  phone?: string;
+  password: string;
+  wallet_address?: string;
+  referral_code?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (identifier: string, password: string) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-}
-
-interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-  wallet_address?: string;
+  verifyPhone: (phone: string, otp: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+const SESSION_KEY = "swapease_user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAuth = useCallback(async () => {
-    if (IS_DEMO) {
-      // Demo mode: restore session from localStorage
-      try {
-        const stored = typeof window !== "undefined"
-          ? localStorage.getItem("demo_current_user")
-          : null;
-        if (stored) {
-          const u = JSON.parse(stored) as User;
-          setUser(u);
-        }
-      } catch {}
-      setLoading(false);
-      return;
+  const saveSession = (u: User) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(u));
     }
+  };
+
+  const clearSession = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  };
+
+  const checkAuth = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_BASE}/api/auth/me`, {
-        withCredentials: true,
-      });
-      setUser(res.data);
-    } catch {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (token) {
-        try {
-          const res = await axios.get(`${API_BASE}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUser(res.data);
-        } catch {
-          if (typeof window !== "undefined")
-            localStorage.removeItem("token");
-          setUser(null);
-        }
-      } else {
-        setUser(null);
+      const stored =
+        typeof window !== "undefined"
+          ? localStorage.getItem(SESSION_KEY)
+          : null;
+      if (stored) {
+        const u = JSON.parse(stored) as User;
+        setUser(u);
       }
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -122,84 +88,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (email: string, password: string): Promise<User> => {
-    if (IS_DEMO) {
-      const users = getDemoUsers();
-      const match = Object.values(users).find(
-        (u) => u.email === email && u.password === password
-      );
-      if (!match) throw new Error("Invalid email or password");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _pw, ...safeUser } = match;
-      setUser(safeUser);
-      if (typeof window !== "undefined")
-        localStorage.setItem("demo_current_user", JSON.stringify(safeUser));
-      return safeUser;
+  const register = async (data: RegisterData): Promise<User> => {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: data.name || data.username,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        referral_code: data.referral_code,
+      }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      // Throw in a shape the existing catch blocks can parse
+      throw Object.assign(new Error(json.detail || "Registration failed"), {
+        response: { data: { detail: json.detail || "Registration failed" } },
+      });
     }
-    const res = await axios.post(
-      `${API_BASE}/api/auth/login`,
-      { email, password },
-      { withCredentials: true }
-    );
-    if (res.data.token && typeof window !== "undefined")
-      localStorage.setItem("token", res.data.token);
-    setUser(res.data);
-    return res.data;
+
+    const u: User = {
+      ...json,
+      username: json.email,
+    };
+    setUser(u);
+    saveSession(u);
+    return u;
   };
 
-  const register = async (data: RegisterData): Promise<User> => {
-    if (IS_DEMO) {
-      const users = getDemoUsers();
-      const emailExists = Object.values(users).some((u) => u.email === data.email);
-      const usernameExists = Object.values(users).some(
-        (u) => u.username === data.username
-      );
-      if (emailExists) throw Object.assign(new Error(), {
-        response: { data: { detail: "An account with this email already exists" } },
-      });
-      if (usernameExists) throw Object.assign(new Error(), {
-        response: { data: { detail: "Username already taken" } },
-      });
-      const newUser = makeDemoUser(data);
-      users[newUser.id] = newUser;
-      saveDemoUsers(users);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _pw, ...safeUser } = newUser;
-      setUser(safeUser);
-      if (typeof window !== "undefined")
-        localStorage.setItem("demo_current_user", JSON.stringify(safeUser));
-      return safeUser;
-    }
-    const res = await axios.post(`${API_BASE}/api/auth/register`, data, {
-      withCredentials: true,
+  const login = async (identifier: string, password: string): Promise<User> => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, password }),
     });
-    if (res.data.token && typeof window !== "undefined")
-      localStorage.setItem("token", res.data.token);
-    setUser(res.data);
-    return res.data;
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      throw Object.assign(new Error(json.detail || "Login failed"), {
+        response: { data: { detail: json.detail || "Login failed" } },
+      });
+    }
+
+    const u: User = {
+      ...json,
+      username: json.email,
+    };
+    setUser(u);
+    saveSession(u);
+    return u;
   };
 
   const logout = async () => {
-    if (IS_DEMO) {
-      if (typeof window !== "undefined")
-        localStorage.removeItem("demo_current_user");
-      setUser(null);
-      return;
-    }
-    try {
-      await axios.post(
-        `${API_BASE}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      );
-    } catch {}
-    if (typeof window !== "undefined") localStorage.removeItem("token");
+    clearSession();
     setUser(null);
+  };
+
+  const verifyPhone = async (_phone: string, otp: string): Promise<boolean> => {
+    // Accept any 6-digit OTP for now (real SMS can be wired later)
+    if (otp.length === 6 && user) {
+      const updated = { ...user, is_phone_verified: true };
+      setUser(updated);
+      saveSession(updated);
+      return true;
+    }
+    return false;
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, checkAuth }}
+      value={{ user, loading, login, register, logout, checkAuth, verifyPhone }}
     >
       {children}
     </AuthContext.Provider>
@@ -212,13 +174,17 @@ export function useAuth() {
   return ctx;
 }
 
-// Axios instance with auth headers
-export const api = axios.create({ baseURL: `${API_BASE}/api` });
-
+// Keep api export for backward compat with other files that import it
+import axios from "axios";
+export const api = axios.create({ baseURL: "/api" });
 api.interceptors.request.use((config) => {
-  config.withCredentials = true;
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const stored =
+    typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
+  if (stored) {
+    try {
+      const u = JSON.parse(stored) as User;
+      if (u.id) config.headers["x-user-id"] = u.id;
+    } catch {}
+  }
   return config;
 });
