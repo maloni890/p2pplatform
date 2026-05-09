@@ -89,6 +89,9 @@ export default function P2PPage() {
 
   return (
     <div style={{ background: "#0d1117", minHeight: "100%", fontFamily: "'Inter',-apple-system,sans-serif", fontSize: 13, color: "#e6edf3" }}>
+      {/* Background glows */}
+      <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
 
       {/* ── TOP BAR ─────────────────────────────────────────────── */}
       <div
