@@ -127,7 +127,7 @@ export default function LandingPage() {
             Get Started 🚀
           </Link>
           <Link
-            href="/p2p"
+            href="/about"
             className="w-full h-12 bg-transparent border-2 border-[#4d7cfe] text-[#4d7cfe] text-[15px] font-medium rounded-full flex items-center justify-center gap-2 hover:bg-[rgba(77,124,254,0.05)] hover:border-[#5d8cff] transition-all duration-300 active:scale-95"
           >
             📚 Learn More
