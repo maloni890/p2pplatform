@@ -63,6 +63,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#0d1117]" style={{ fontFamily: "Inter, -apple-system, sans-serif" }}>
+      {/* Background glows */}
+      <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
+
+      <div className="relative z-10">
       {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 h-14 px-5 flex items-center justify-between transition-all duration-200 ${
@@ -118,7 +123,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="min-h-[85vh] pt-20 pb-16 px-5">
+      <section className="min-h-[85vh] pt-20 pb-16 px-5 relative z-10">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column */}
           <div className="lg:text-left text-center">
