@@ -453,6 +453,7 @@ export default function HomePage() {
         {bottomTab === "Following" && "Follow traders to see their activity"}
         {bottomTab === "Announcement" && "No new announcements"}
       </div>
+      </div>
     </div>
   );
 }

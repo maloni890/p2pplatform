@@ -292,6 +292,7 @@ export default function P2PPage() {
           </div>
         ))
       )}
+      </div>
     </div>
   );
 }

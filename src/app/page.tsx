@@ -405,6 +405,7 @@ export default function LandingPage() {
           opacity: 0;
         }
       `}</style>
+      </div>
     </div>
   );
 }
