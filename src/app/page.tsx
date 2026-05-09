@@ -119,18 +119,18 @@ export default function LandingPage() {
         </p>
 
         {/* CTA Buttons - Stacked on mobile */}
-        <div className="flex flex-col gap-2.5 mb-4">
+        <div className="flex flex-col gap-3 mb-4">
           <Link
             href="/register"
-            className="w-full h-12 bg-gradient-to-r from-[#4d7cfe] to-[#6b94ff] text-white text-[15px] font-semibold rounded-full flex items-center justify-center hover:shadow-lg transition-all"
+            className="w-full h-12 bg-[#4d7cfe] text-white text-[15px] font-semibold rounded-full flex items-center justify-center gap-2 hover:shadow-[0_8px_16px_rgba(77,124,254,0.4)] hover:bg-[#5d8cff] transition-all duration-300 active:scale-95"
           >
-            Start Trading
+            Get Started 🚀
           </Link>
           <Link
             href="/p2p"
-            className="w-full h-12 bg-transparent border border-[rgba(255,255,255,0.15)] text-white text-[15px] font-medium rounded-full flex items-center justify-center hover:bg-[rgba(255,255,255,0.05)] transition-all"
+            className="w-full h-12 bg-transparent border-2 border-[#4d7cfe] text-[#4d7cfe] text-[15px] font-medium rounded-full flex items-center justify-center gap-2 hover:bg-[rgba(77,124,254,0.05)] hover:border-[#5d8cff] transition-all duration-300 active:scale-95"
           >
-            View P2P Market
+            📚 Learn More
           </Link>
         </div>
 
