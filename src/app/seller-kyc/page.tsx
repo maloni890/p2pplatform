@@ -218,7 +218,7 @@ export default function SellerKycPage() {
         {/* Header */}
         <div className="flex items-center gap-2 mb-3">
           <button
-            onClick={() => (step > 1 ? setStep((step - 1) as KycStep) : router.push("/dashboard"))}
+            onClick={() => (step > 1 ? setStep((step - 1) as KycStep) : router.push("/profile"))}
             className="p-1.5 rounded-lg hover:bg-surface transition-colors"
           >
             <ArrowLeft className="size-4 text-muted-foreground" />

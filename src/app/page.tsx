@@ -341,7 +341,7 @@ export default function HomePage() {
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[9px] text-muted-foreground">₹{trade.inr.toLocaleString()}</p>
+                        <p className="text-[9px] text-muted-foreground">₹{trade.inr.toLocaleString("en-US")}</p>
                       </div>
                     </div>
                   ))}

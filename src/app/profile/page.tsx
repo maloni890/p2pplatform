@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -17,19 +17,12 @@ import {
   MessageCircle,
   LogOut,
   ChevronRight,
-  Home,
-  Calculator,
-  LayoutDashboard,
   Crown,
   BadgeCheck,
 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 
-const MOBILE_NAV_ITEMS = [
-  { label: "Home", href: "/", icon: Home },
-  { label: "Calculator", href: "/calculator", icon: Calculator },
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Profile", href: "/profile", icon: User },
-];
+
 
 interface MenuItem {
   label: string;
@@ -177,26 +170,7 @@ export default function ProfilePage() {
         <p className="text-center text-[9px] text-muted-foreground mt-4">SwapEase v1.0.0</p>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bottom-nav border-t border-border md:hidden z-50">
-        <div className="flex items-center justify-around h-full max-w-[390px] mx-auto">
-          {MOBILE_NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-white"
-                }`}
-              >
-                <item.icon className="size-4" />
-                <span className="text-[8px] font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <BottomNav />
     </div>
   );
 }
