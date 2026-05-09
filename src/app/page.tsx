@@ -67,7 +67,7 @@ export default function LandingPage() {
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="relative z-10">
+      {/* Navigation */}
       {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 h-14 px-5 flex items-center justify-between transition-all duration-200 ${
@@ -405,7 +405,6 @@ export default function LandingPage() {
           opacity: 0;
         }
       `}</style>
-      </div>
     </div>
   );
 }

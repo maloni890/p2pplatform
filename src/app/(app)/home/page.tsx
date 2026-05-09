@@ -91,8 +91,6 @@ export default function HomePage() {
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="relative z-10">
-
       {/* ── TOP BAR ───────────────────────────────────────────────── */}
       <div
         className="flex items-center justify-between px-4"
@@ -452,7 +450,6 @@ export default function HomePage() {
         {bottomTab === "Discover" && "Explore trending coins and news"}
         {bottomTab === "Following" && "Follow traders to see their activity"}
         {bottomTab === "Announcement" && "No new announcements"}
-      </div>
       </div>
     </div>
   );

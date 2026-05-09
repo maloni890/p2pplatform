@@ -108,7 +108,6 @@ export default function ChatPage() {
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="relative z-10">
       {/* Top Bar - 44px */}
       <div className="sticky top-0 z-20 bg-[#0d1117] border-b border-[#21262d]">
         <div className="h-[44px] flex items-center justify-between px-4">
@@ -220,8 +219,6 @@ export default function ChatPage() {
             </Link>
           ))
         )}
-      </div>
-      </div>
     </div>
   );
 }
