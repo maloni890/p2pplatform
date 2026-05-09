@@ -1,9 +1,10 @@
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
 
-const sql = neon(process.env.DATABASE_URL!);
+export const runtime = "edge";
 
 export async function GET() {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     // Get total users count
     const usersResult = await sql`SELECT COUNT(*) as count FROM users WHERE role = 'user'`;

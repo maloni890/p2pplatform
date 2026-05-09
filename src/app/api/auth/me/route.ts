@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const userId = request.headers.get("x-user-id");
     if (!userId) {

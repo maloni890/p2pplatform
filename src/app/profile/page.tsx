@@ -232,7 +232,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex items-center gap-2">
               {"count" in item && item.count !== undefined && (
-                <span className="text-sm text-[#7d8590]">{item.count}</span>
+                <span className="text-sm text-[#7d8590]">{String(item.count)}</span>
               )}
               <ChevronRight className="size-4 text-[#7d8590]" />
             </div>
