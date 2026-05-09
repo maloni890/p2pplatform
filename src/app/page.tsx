@@ -22,7 +22,7 @@ const STEPS = [
 const NETWORKS = [
   { name: "TRON", type: "TRC20", color: "#ff0013" },
   { name: "Ethereum", type: "ERC20", color: "#627eea" },
-  { name: "BNB Chain", type: "BEP20", color: "#f0b90b" },
+  { name: "BNB Chain", type: "BEP20", color: "#4d7cfe" },
 ];
 
 export default function LandingPage() {
@@ -71,7 +71,7 @@ export default function LandingPage() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-[#f0b90b] rounded-md flex items-center justify-center">
+          <div className="w-7 h-7 bg-[#4d7cfe] rounded-md flex items-center justify-center">
             <span className="text-black text-xs font-bold">SE</span>
           </div>
           <span className="text-[#f0f6fc] text-base font-semibold">SwapEase</span>
@@ -84,7 +84,7 @@ export default function LandingPage() {
           <a href="#how-it-works" className="text-[13px] text-[#8b949e] hover:text-[#f0f6fc] transition-colors">About</a>
           <Link
             href="/register"
-            className="h-[34px] px-4 bg-[#f0b90b] text-black text-[13px] font-semibold rounded-md flex items-center hover:bg-[#d9a60a] transition-colors"
+            className="h-[34px] px-4 bg-[#4d7cfe] text-white text-[13px] font-semibold rounded-md flex items-center hover:bg-[#5d8cff] transition-colors"
           >
             Get Started
           </Link>
@@ -108,7 +108,7 @@ export default function LandingPage() {
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="h-11 bg-[#f0b90b] text-black text-[14px] font-semibold rounded-md flex items-center justify-center"
+                className="h-11 bg-[#4d7cfe] text-white text-[14px] font-semibold rounded-md flex items-center justify-center"
               >
                 Get Started
               </Link>
@@ -134,7 +134,7 @@ export default function LandingPage() {
             <h1 className="text-4xl md:text-[52px] font-bold text-[#f0f6fc] leading-[1.1] mb-2 animate-fade-in animation-delay-100">
               Buy &amp; Sell USDT
             </h1>
-            <p className="text-2xl md:text-[40px] font-semibold text-[#f0b90b] mb-4 animate-fade-in animation-delay-200">
+            <p className="text-2xl md:text-[40px] font-semibold text-[#4d7cfe] mb-4 animate-fade-in animation-delay-200">
               Get INR directly in your bank
             </p>
 
@@ -147,7 +147,7 @@ export default function LandingPage() {
             <div className="flex gap-3 lg:justify-start justify-center flex-wrap mb-4 animate-fade-in animation-delay-400">
               <Link
                 href="/register"
-                className="h-11 px-6 bg-[#f0b90b] text-black text-[14px] font-semibold rounded-md flex items-center hover:scale-[1.02] transition-transform"
+                className="h-11 px-6 bg-[#4d7cfe] text-white text-[14px] font-semibold rounded-md flex items-center hover:bg-[#5d8cff] transition-all"
               >
                 Start Trading
               </Link>
@@ -245,10 +245,10 @@ export default function LandingPage() {
             {FEATURES.map((feature, i) => (
               <div
                 key={i}
-                className="bg-[#161b22] border border-[#21262d] rounded-lg p-5 hover:border-[#f0b90b] transition-colors duration-200"
+                className="bg-[#161b22] border border-[#21262d] rounded-lg p-5 hover:border-[#4d7cfe] transition-colors duration-200"
                 style={{ transitionDelay: `${i * 100}ms` }}
               >
-                <feature.icon className="size-5 text-[#f0b90b] mb-3" />
+                <feature.icon className="size-5 text-[#4d7cfe] mb-3" />
                 <h3 className="text-[14px] font-semibold text-[#f0f6fc] mb-1">{feature.title}</h3>
                 <p className="text-[13px] text-[#8b949e] leading-relaxed">{feature.desc}</p>
               </div>
@@ -305,7 +305,7 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <p className="text-[12px] text-[#f0b90b]">
+        <p className="text-[12px] text-[#4d7cfe]">
           Always verify the network before sending USDT to avoid loss of funds
         </p>
       </section>
@@ -320,7 +320,7 @@ export default function LandingPage() {
         <div className="flex gap-3 justify-center flex-wrap">
           <Link
             href="/register"
-            className="h-11 px-6 bg-[#f0b90b] text-black text-[14px] font-semibold rounded-md flex items-center hover:scale-[1.02] transition-transform"
+            className="h-11 px-6 bg-[#4d7cfe] text-white text-[14px] font-semibold rounded-md flex items-center hover:bg-[#5d8cff] transition-all"
           >
             Start Trading
           </Link>
@@ -339,7 +339,7 @@ export default function LandingPage() {
           {/* Top Row */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-[#f0b90b] rounded-md flex items-center justify-center">
+              <div className="w-7 h-7 bg-[#4d7cfe] rounded-md flex items-center justify-center">
                 <span className="text-black text-xs font-bold">SE</span>
               </div>
               <span className="text-[#f0f6fc] text-base font-semibold">SwapEase</span>

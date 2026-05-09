@@ -72,7 +72,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
-        <div className="size-8 border-4 border-[#f0b90b] border-t-transparent rounded-full animate-spin" />
+        <div className="size-8 border-4 border-[#4d7cfe] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -206,7 +206,7 @@ export default function ProfilePage() {
           >
             {tab === "notifications" ? "Notifications" : tab.charAt(0).toUpperCase() + tab.slice(1)}
             {activeTab === tab && (
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-[#f0b90b]" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-[#4d7cfe]" />
             )}
           </button>
         ))}

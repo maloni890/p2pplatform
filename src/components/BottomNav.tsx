@@ -38,12 +38,12 @@ export default function BottomNav({ chatBadge = 0 }: { chatBadge?: number }) {
               <Icon size={22} strokeWidth={active ? 2 : 1.5} />
               {label === "Chat" && chatBadge > 0 && (
                 <span
-                  className="absolute -top-1 -right-1.5 flex items-center justify-center rounded-full text-black font-bold"
+                  className="absolute -top-1 -right-1.5 flex items-center justify-center rounded-full text-white font-bold"
                   style={{
                     minWidth: 16,
                     height: 16,
                     fontSize: 9,
-                    background: "#f0b90b",
+                    background: "#4d7cfe",
                     padding: "0 3px",
                   }}
                 >

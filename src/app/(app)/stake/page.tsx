@@ -63,8 +63,8 @@ export default function StakePage() {
       <div className="p-4 space-y-4">
         {/* Banner */}
         <div className="bg-[#161b22] rounded-lg p-4 flex items-center gap-3">
-          <div className="size-10 rounded-full bg-[#f0b90b]/20 flex items-center justify-center shrink-0">
-            <span className="text-[#f0b90b] text-lg font-bold">$</span>
+          <div className="size-10 rounded-full bg-[#4d7cfe]/20 flex items-center justify-center shrink-0">
+            <span className="text-[#4d7cfe] text-lg font-bold">$</span>
           </div>
           <div>
             <p className="text-[14px] font-bold text-white">Stake USDT, Earn Daily</p>
@@ -81,7 +81,7 @@ export default function StakePage() {
               <p className="text-[11px] text-[#0ecb81]">Rewards earned: ₹{myStaking.rewards.toFixed(2)}</p>
             </div>
             {myStaking.amount > 0 && (
-              <button className="px-4 py-2 border border-[#f0b90b] text-[#f0b90b] text-[12px] font-medium rounded">
+              <button className="px-4 py-2 border border-[#4d7cfe] text-[#4d7cfe] text-[12px] font-medium rounded">
                 Unstake
               </button>
             )}
@@ -101,7 +101,7 @@ export default function StakePage() {
               </div>
               
               {/* APY */}
-              <p className="text-[20px] font-bold text-[#f0b90b] mb-3">{plan.apy.toFixed(2)}% APY</p>
+              <p className="text-[20px] font-bold text-[#4d7cfe] mb-3">{plan.apy.toFixed(2)}% APY</p>
               
               {/* Details row */}
               <div className="flex items-center justify-between text-[11px] text-[#8b949e] mb-3">
@@ -113,7 +113,7 @@ export default function StakePage() {
               {/* Stake button */}
               <button
                 onClick={() => handleStakeNow(plan)}
-                className="w-full h-8 bg-[#f0b90b] text-black text-[12px] font-bold rounded"
+                className="w-full h-8 bg-[#4d7cfe] text-black text-[12px] font-bold rounded"
               >
                 Stake Now
               </button>
@@ -123,7 +123,7 @@ export default function StakePage() {
 
         {/* Important Note */}
         <div className="bg-[rgba(240,185,11,0.08)] border border-[rgba(240,185,11,0.2)] rounded-lg p-3">
-          <p className="text-[11px] text-[#f0b90b]/90 leading-relaxed">
+          <p className="text-[11px] text-[#4d7cfe]/90 leading-relaxed">
             Rewards funded by SwapEase P2P trading commission. Returns may vary based on platform volume.
           </p>
         </div>
@@ -197,7 +197,7 @@ export default function StakePage() {
                 <span className="text-[11px] text-[#8b949e]">Amount</span>
                 <button 
                   onClick={() => setStakeAmount(String(selectedPlan.max))}
-                  className="text-[11px] text-[#f0b90b] font-medium"
+                  className="text-[11px] text-[#4d7cfe] font-medium"
                 >
                   Max
                 </button>
@@ -233,7 +233,7 @@ export default function StakePage() {
             <button
               onClick={handleConfirmStake}
               disabled={!stakeAmount || parseFloat(stakeAmount) < selectedPlan.min}
-              className="w-full h-11 bg-[#f0b90b] text-black text-[14px] font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-11 bg-[#4d7cfe] text-black text-[14px] font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Confirm Stake
             </button>
