@@ -181,15 +181,15 @@ export default function LandingPage() {
       <section className="relative z-10 bg-[#13131f] border-t border-b border-[rgba(255,255,255,0.06)] px-4 py-4">
         <div className="flex justify-between items-center gap-4">
           <div className="text-center flex-1">
-            <div className="text-[18px] font-bold text-white">₹0</div>
+            <div className="text-[18px] font-bold text-white">₹19cr</div>
             <div className="text-[11px] text-[#8b949e]">Volume</div>
           </div>
           <div className="text-center flex-1">
-            <div className="text-[18px] font-bold text-white">0</div>
+            <div className="text-[18px] font-bold text-white">456</div>
             <div className="text-[11px] text-[#8b949e]">Traders</div>
           </div>
           <div className="text-center flex-1">
-            <div className="text-[18px] font-bold text-white">0</div>
+            <div className="text-[18px] font-bold text-white">2390</div>
             <div className="text-[11px] text-[#8b949e]">Trades</div>
           </div>
         </div>
