@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
 
-const sql = neon(process.env.DATABASE_URL!);
+export const runtime = "edge";
 
 function generateReferralCode(): string {
   return "SE" + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 export async function POST(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { name, email, phone, password, referral_code } = body;

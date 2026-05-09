@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-const sql = neon(process.env.DATABASE_URL!);
+export const runtime = "edge";
 
 // Generate ticket number
 function generateTicketNumber(): string {
@@ -12,6 +12,7 @@ function generateTicketNumber(): string {
 
 // GET - Fetch user's tickets
 export async function GET(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
@@ -49,6 +50,7 @@ function isValidUUID(str: string | null | undefined): boolean {
 
 // POST - Create new ticket
 export async function POST(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { userId, userName, userEmail, userPhone, subject, category, message, orderId } = body;

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+export const runtime = "edge";
 
 // GET - Fetch ads
 export async function GET(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "buy";
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new ad
 export async function POST(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const {

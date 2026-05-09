@@ -1,9 +1,10 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-const sql = neon(process.env.DATABASE_URL!);
+export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "all";
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { orderId, action, adminNote } = body;

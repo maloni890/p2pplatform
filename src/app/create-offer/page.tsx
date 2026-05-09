@@ -63,7 +63,6 @@ export default function CreateOfferPage() {
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
       <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
 
-      <div className="relative z-10">
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8 w-full" data-testid="create-offer-page">
         <h1 className="font-sans text-3xl font-bold text-foreground mb-2">
