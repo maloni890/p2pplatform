@@ -48,7 +48,7 @@ export default function CreateOfferPage() {
         max_limit_inr: parseFloat(form.max_limit_inr),
       });
       toast.success("Offer created successfully!");
-      router.push("/dashboard");
+      router.push("/p2p");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } };
       toast.error(axiosErr?.response?.data?.detail || "Failed to create offer");

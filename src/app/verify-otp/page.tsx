@@ -84,7 +84,7 @@ function OTPVerificationContent() {
       
       // Redirect to dashboard after short delay
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/home");
       }, 2000);
     } catch {
       toast.error("Invalid OTP. Please try again.");

@@ -56,7 +56,7 @@ export default function LoginPage() {
       const data = await login(identifier, password);
       toast.success("Login successful!");
       if (data.role === "admin") router.push("/admin");
-      else router.push("/dashboard");
+      else router.push("/home");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: unknown } }; message?: string };
       const detail = axiosErr?.response?.data?.detail;
