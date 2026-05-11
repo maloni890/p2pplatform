@@ -1,10 +1,9 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "all";
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { kycId, action, rejectionReason, adminId } = body;

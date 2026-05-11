@@ -1,40 +1,48 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  Share2,
+  User,
   Pencil,
-  ChevronRight,
-  ChevronDown,
-  ThumbsUp,
-  CreditCard,
-  Lock,
-  Users,
-  Ban,
-  Settings,
-  Shield,
+  Landmark,
+  ShieldCheck,
+  ClipboardList,
+  History,
   Gift,
-  HelpCircle,
-  Info,
+  Tag,
+  MessageCircle,
   LogOut,
-  Check,
-  Bell,
-  FileText,
+  ChevronRight,
+  Home,
+  Calculator,
+  LayoutDashboard,
+  Crown,
+  BadgeCheck,
 } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
 
-type TabType = "trade" | "notifications" | "others";
+const MOBILE_NAV_ITEMS = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Calculator", href: "/calculator", icon: Calculator },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Profile", href: "/profile", icon: User },
+];
+
+interface MenuItem {
+  label: string;
+  href?: string;
+  icon: React.ElementType;
+  description?: string;
+  badge?: string;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("trade");
-  const [showMoreStats, setShowMoreStats] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,206 +60,143 @@ export default function ProfilePage() {
     }
   };
 
+  const menuItems: MenuItem[] = [
+    { label: "Edit Profile", href: "/profile/edit", icon: Pencil, description: "Update your personal information" },
+    { label: "Bank Accounts", href: "/profile/bank-accounts", icon: Landmark, description: "Add or manage your bank accounts" },
+    { label: "KYC Verification", href: "/profile/kyc", icon: ShieldCheck, description: "Verify your Aadhaar & PAN", badge: user?.is_verified_trader ? "Verified" : "Pending" },
+    { label: "My Orders", href: "/profile/orders", icon: ClipboardList, description: "View all your buy & sell orders" },
+    { label: "Withdrawal History", href: "/profile/withdrawals", icon: History, description: "Track your INR withdrawals" },
+    { label: "Refer & Earn", href: "/profile/referrals", icon: Gift, description: "Invite friends and earn rewards" },
+    { label: "Offers", href: "/profile/offers", icon: Tag, description: "Exclusive deals and promotions" },
+    { label: "Support", href: "/profile/support", icon: MessageCircle, description: "Get help via WhatsApp or ticket" },
+  ];
+
   const getUserInitials = () => {
     if (user?.name) {
-      return user.name[0].toUpperCase();
+      const names = user.name.split(" ");
+      if (names.length >= 2) return (names[0][0] + names[1][0]).toUpperCase();
+      return user.name.substring(0, 2).toUpperCase();
     }
-    return user?.username?.[0].toUpperCase() || "U";
+    return user?.username?.substring(0, 2).toUpperCase() || "U";
   };
 
-  // Mock stats - replace with real data
-  const stats = {
-    trades30d: user?.completed_trades || 0,
-    completionRate: "100%",
-    avgReleaseTime: "2.5 min",
-    avgPayTime: "3.2 min",
-    totalTrades: user?.completed_trades || 0,
-    positiveFeedback: 98,
-  };
+  const isVIP = (user?.completed_trades || 0) >= 50;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
-        <div className="size-8 border-4 border-[#4d7cfe] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="size-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!user) return null;
 
-  const tradeItems = [
-    { icon: ThumbsUp, label: "Received Feedback", count: stats.positiveFeedback, href: "/profile/feedback" },
-    { icon: CreditCard, label: "Payment Method(s)", count: 2, href: "/profile/bank-accounts" },
-    { icon: Lock, label: "Restrictions Removal Center", href: "/profile/restrictions" },
-    { icon: Users, label: "Follows", href: "/profile/follows" },
-    { icon: Ban, label: "Blocked Users", href: "/profile/blocked" },
-  ];
-
-  const notificationItems = [
-    { icon: Bell, label: "Push Notifications", href: "/profile/notifications" },
-    { icon: FileText, label: "Transaction Alerts", href: "/profile/alerts" },
-  ];
-
-  const otherItems = [
-    { icon: Pencil, label: "Edit Profile", href: "/profile/edit" },
-    { icon: Shield, label: "Security Settings", href: "/profile/security" },
-    { icon: Gift, label: "Refer & Earn", href: "/profile/referrals" },
-    { icon: HelpCircle, label: "Support", href: "/profile/support" },
-    { icon: Info, label: "About SwapEase", href: "/about" },
-  ];
-
-  const currentItems = activeTab === "trade" ? tradeItems : activeTab === "notifications" ? notificationItems : otherItems;
-
   return (
-    <div className="min-h-screen bg-[#0d1117] flex flex-col pb-16">
+    <div className="min-h-screen flex flex-col pb-16 md:pb-0 relative">
       {/* Background glows */}
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
-      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(77,124,254,0.1)_0%,transparent_70%)] pointer-events-none" />
 
-      {/* Top Bar - 44px */}
-      <header className="h-[44px] flex items-center justify-between px-4 bg-[#0d1117] sticky top-0 z-50">
-        <button onClick={() => router.back()} className="p-1">
-          <ArrowLeft className="size-5 text-white" />
-        </button>
-        <button className="p-1">
-          <Share2 className="size-5 text-white" />
-        </button>
-      </header>
-
-      {/* User Header */}
-      <div className="px-4 pt-4 pb-5">
-        {/* Avatar */}
-        <div className="flex items-center gap-3 mb-3">
-          <div className="size-16 rounded-full bg-[#21262d] flex items-center justify-center">
-            <span className="text-white text-2xl font-bold">{getUserInitials()}</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-white">
-                {user.name || `User-${user.id?.slice(-5) || "xxxxx"}`}
-              </span>
-              <button className="p-1">
-                <Pencil className="size-3.5 text-[#7d8590]" />
-              </button>
+      {/* Header with Avatar */}
+      <div className="relative pt-6 pb-4 px-3">
+        <div className="max-w-[390px] mx-auto flex flex-col items-center">
+          {/* Avatar */}
+          <div className="relative mb-3">
+            <div className="size-16 rounded-full bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center text-white text-xl font-bold shadow-lg">
+              {getUserInitials()}
             </div>
-            <p className="text-xs text-[#7d8590]">Verified user</p>
-          </div>
-        </div>
-
-        {/* Verification Badges */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Check className="size-3 text-[#0ecb81]" />
-            <span className="text-xs text-[#7d8590]">Email</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Check className="size-3 text-[#0ecb81]" />
-            <span className="text-xs text-[#7d8590]">SMS</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Check className="size-3 text-[#0ecb81]" />
-            <span className="text-xs text-[#7d8590]">KYC</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Card */}
-      <div className="mx-4 mb-4 bg-[#161b22] rounded-lg p-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-lg font-bold text-white">{stats.trades30d}</p>
-            <p className="text-[11px] text-[#7d8590]">30d Trades</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">{stats.completionRate}</p>
-            <p className="text-[11px] text-[#7d8590]">30d Completion Rate</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">{stats.avgReleaseTime}</p>
-            <p className="text-[11px] text-[#7d8590]">Avg. Release Time</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">{stats.avgPayTime}</p>
-            <p className="text-[11px] text-[#7d8590]">Avg. Pay Time</p>
-          </div>
-        </div>
-
-        {showMoreStats && (
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-[#21262d]">
-            <div>
-              <p className="text-lg font-bold text-white">{stats.totalTrades}</p>
-              <p className="text-[11px] text-[#7d8590]">Total Trades</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-white">{stats.positiveFeedback}%</p>
-              <p className="text-[11px] text-[#7d8590]">Positive Feedback</p>
-            </div>
-          </div>
-        )}
-
-        <button 
-          onClick={() => setShowMoreStats(!showMoreStats)}
-          className="w-full flex items-center justify-center gap-1 mt-3 pt-3 border-t border-[#21262d]"
-        >
-          <span className="text-xs text-[#7d8590]">{showMoreStats ? "Less" : "More"}</span>
-          <ChevronDown className={`size-3 text-[#7d8590] transition-transform ${showMoreStats ? "rotate-180" : ""}`} />
-        </button>
-      </div>
-
-      {/* Tab Row */}
-      <div className="flex items-center border-b border-[#21262d] mx-4">
-        {(["trade", "notifications", "others"] as TabType[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 text-sm font-medium capitalize relative ${
-              activeTab === tab ? "text-white" : "text-[#7d8590]"
-            }`}
-          >
-            {tab === "notifications" ? "Notifications" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-[#4d7cfe]" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Menu Items */}
-      <div className="flex-1">
-        {currentItems.map((item, index) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={`flex items-center justify-between px-4 h-[52px] ${
-              index !== currentItems.length - 1 ? "border-b border-[#21262d]" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon className="size-5 text-[#7d8590]" />
-              <span className="text-sm text-white">{item.label}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {"count" in item && item.count !== undefined && (
-                <span className="text-sm text-[#7d8590]">{String(item.count)}</span>
+            {/* Badge */}
+            <div className="absolute -bottom-1 -right-1">
+              {isVIP ? (
+                <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded-full shadow-lg">
+                  <Crown className="size-2.5" />
+                  VIP
+                </div>
+              ) : (
+                <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-primary text-white text-[8px] font-bold rounded-full shadow-lg">
+                  <BadgeCheck className="size-2.5" />
+                  Member
+                </div>
               )}
-              <ChevronRight className="size-4 text-[#7d8590]" />
             </div>
-          </Link>
-        ))}
+          </div>
 
-        {/* Logout - only in Others tab */}
-        {activeTab === "others" && (
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 h-[52px] w-full border-t border-[#21262d]"
-          >
-            <LogOut className="size-5 text-[#f6465d]" />
-            <span className="text-sm text-[#f6465d]">Logout</span>
-          </button>
-        )}
+          {/* Name and Info */}
+          <h1 className="text-[15px] font-bold text-white mb-0.5">{user.name || user.username}</h1>
+          <p className="text-[10px] text-muted-foreground">{user.email}</p>
+        </div>
       </div>
 
-      <BottomNav />
+      {/* Menu List */}
+      <main className="flex-1 w-full max-w-[390px] mx-auto px-3 pb-6 relative z-10">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {menuItems.map((item, index) => (
+            <Link
+              key={item.label}
+              href={item.href || "#"}
+              className={`flex items-center gap-2.5 px-3 py-2.5 hover:bg-surface/50 transition-colors ${
+                index !== menuItems.length - 1 ? "border-b border-border" : ""
+              }`}
+            >
+              <div className="size-7 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <item.icon className="size-3.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-medium text-white">{item.label}</span>
+                  {item.badge && (
+                    <span className={`px-1 py-0.5 text-[8px] font-medium rounded-full ${
+                      item.badge === "Verified" ? "bg-green-500/15 text-green-400" : "bg-amber-500/15 text-amber-400"
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                {item.description && (
+                  <p className="text-[9px] text-muted-foreground mt-0.5 truncate">{item.description}</p>
+                )}
+              </div>
+              <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
+            </Link>
+          ))}
+        </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="w-full mt-3 flex items-center gap-2.5 px-3 py-2.5 bg-red-500/10 rounded-xl border border-red-500/20 hover:bg-red-500/15 transition-colors"
+        >
+          <div className="size-7 rounded-full bg-red-500/15 flex items-center justify-center text-red-400 shrink-0">
+            <LogOut className="size-3.5" />
+          </div>
+          <span className="text-[11px] font-medium text-red-400">Logout</span>
+        </button>
+
+        {/* App Version */}
+        <p className="text-center text-[9px] text-muted-foreground mt-4">SwapEase v1.0.0</p>
+      </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bottom-nav border-t border-border md:hidden z-50">
+        <div className="flex items-center justify-around h-full max-w-[390px] mx-auto">
+          {MOBILE_NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                <item.icon className="size-4" />
+                <span className="text-[8px] font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

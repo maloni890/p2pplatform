@@ -2,410 +2,478 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Shield, Zap, Lock, Users, Percent, Layers, ChevronDown, Menu, X, Star } from "lucide-react";
+import Image from "next/image";
+import {
+  Zap,
+  Shield,
+  Percent,
+  TrendingUp,
+  Link2,
+  Wallet,
+  Clock,
+  User,
+  ArrowLeftRight,
+  Landmark,
+  CheckCircle2,
+  ExternalLink,
+} from "lucide-react";
 
-const FEATURES = [
-  { icon: Users, title: "P2P Trading", desc: "Trade directly with verified sellers." },
-  { icon: Zap, title: "Instant Settlement", desc: "INR hits your bank in minutes." },
-  { icon: Lock, title: "Escrow Protected", desc: "USDT locked safely until payment confirmed." },
-  { icon: Shield, title: "Verified Sellers", desc: "KYC-verified traders with ratings." },
-  { icon: Percent, title: "Zero Hidden Fees", desc: "0.3% only. No hidden fees." },
-  { icon: Layers, title: "Multi-Network", desc: "TRC20, ERC20, BEP20 supported." },
-];
+const FEATURES = ["Fast", "Secure", "Zero Fee", "Best Rate", "24/7 Support", "Instant"];
 
-const STEPS = [
-  { num: "01", title: "Post or Browse", desc: "Browse verified seller ads or post your own. Filter by rate and payment method." },
-  { num: "02", title: "Trade with Escrow", desc: "USDT locked securely. Pay INR directly to seller via UPI or bank transfer." },
-  { num: "03", title: "Confirm & Release", desc: "Upload payment proof. Seller confirms and USDT releases to your wallet." },
-];
-
-const TESTIMONIALS = [
-  { initials: "RK", name: "Rohit K.", location: "Mumbai", quote: "Sold 5000 USDT in 10 minutes. Best rates I've found anywhere." },
-  { initials: "PS", name: "Priya S.", location: "Delhi", quote: "KYC process was smooth. Payments hit my bank instantly." },
-  { initials: "AJ", name: "Amit J.", location: "Bangalore", quote: "Been using for 3 months. Zero issues, great support." },
-];
-
-const SECURITY_POINTS = [
-  { icon: "🔐", title: "Escrow Protected", desc: "USDT locked in smart escrow during every trade." },
-  { icon: "🛡️", title: "KYC Verified", desc: "All sellers verified with government ID." },
-  { icon: "⏱️", title: "Dispute Resolution", desc: "24hr admin support for any trade issues." },
-  { icon: "🔒", title: "Non-Custodial", desc: "We never hold your funds or private keys." },
+const LIVE_TRADES = [
+  { name: "Rahul S.", action: "bought", amount: 500, inr: 53175, time: "2 mins ago", initials: "RS" },
+  { name: "Priya M.", action: "sold", amount: 1200, inr: 127620, time: "4 mins ago", initials: "PM" },
+  { name: "Amit K.", action: "bought", amount: 250, inr: 26587, time: "5 mins ago", initials: "AK" },
+  { name: "Sneha R.", action: "sold", amount: 800, inr: 85080, time: "7 mins ago", initials: "SR" },
+  { name: "Vikram J.", action: "bought", amount: 2000, inr: 212700, time: "8 mins ago", initials: "VJ" },
+  { name: "Neha P.", action: "sold", amount: 350, inr: 37222, time: "10 mins ago", initials: "NP" },
 ];
 
 const NETWORKS = [
-  { name: "TRON", type: "TRC20", color: "#e50914" },
-  { name: "Ethereum", type: "ERC20", color: "#627eea" },
-  { name: "BNB", type: "BEP20", color: "#f3ba2f" },
+  { name: "TRON", type: "TRC20", icon: "T" },
+  { name: "Ethereum", type: "ERC20", icon: "E" },
+  { name: "BNB Chain", type: "BEP20", icon: "B" },
 ];
 
-const FAQS = [
-  { q: "Is SwapEase safe to use?", a: "Yes. All trades use escrow protection. USDT is locked until INR payment is confirmed. KYC-verified sellers only." },
-  { q: "What are the fees?", a: "We charge 0.3% on each side of the trade. No deposit, withdrawal, or hidden fees." },
-  { q: "How long does a trade take?", a: "Most trades complete in 5-15 minutes depending on the seller's response time." },
-  { q: "Which networks are supported?", a: "TRC20 (TRON), ERC20 (Ethereum), and BEP20 (BNB Chain)." },
-  { q: "How do I become a seller?", a: "Complete KYC verification and apply as a seller from your profile page." },
-];
-
-const getInitialsBgColor = (initials: string): string => {
-  const colors = ["bg-blue-500", "bg-purple-500", "bg-teal-500"];
-  return colors[initials.charCodeAt(0) % colors.length];
-};
-
-export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+export default function HomePage() {
   const [currentRate] = useState(106.35);
+  const [particles, setParticles] = useState<Array<{ id: number; left: number; delay: number }>>([]);
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    const generated = Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 6,
+    }));
+    setParticles(generated);
+  }, []);
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisibleSections((prev) => new Set([...prev, entry.target.id]));
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    Object.values(sectionRefs.current).forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const setSectionRef = (id: string) => (el: HTMLDivElement | null) => {
+    sectionRefs.current[id] = el;
+  };
+
+  const isVisible = (id: string) => visibleSections.has(id);
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a]" style={{ fontFamily: "Inter, -apple-system, sans-serif" }}>
-      {/* Background glows */}
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Background particles */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {particles.map((p) => (
+          <div
+            key={p.id}
+            className="particle"
+            style={{
+              left: `${p.left}%`,
+              bottom: "0",
+              animationDelay: `${p.delay}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Corner glow effects */}
       <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
-      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.08)_0%,transparent_70%)] pointer-events-none" />
 
-      {/* ═══ NAVBAR ═══════════════════════════════════════════════════ */}
-      <nav className="sticky top-0 z-50 h-[52px] px-4 flex items-center justify-between bg-[rgba(10,10,26,0.95)] border-b border-[rgba(255,255,255,0.06)] backdrop-blur">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-[#4d7cfe] to-[#6b94ff] rounded-[8px] flex items-center justify-center">
-            <span className="text-white text-[11px] font-bold">SE</span>
-          </div>
-          <span className="text-white text-[15px] font-semibold">SwapEase</span>
-        </Link>
-
-        {/* Hamburger */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-white hover:bg-[rgba(255,255,255,0.05)] rounded"
-        >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="absolute top-[52px] left-0 right-0 bg-[#13131f] border-b border-[rgba(255,255,255,0.08)]">
-            <div className="p-4 flex flex-col gap-3">
-              <a href="#features" className="text-[14px] text-white px-4 py-3 hover:bg-[rgba(77,124,254,0.1)] rounded">Features</a>
-              <Link href="/p2p" className="text-[14px] text-white px-4 py-3 hover:bg-[rgba(77,124,254,0.1)] rounded">P2P Market</Link>
-              <a href="#how-it-works" className="text-[14px] text-white px-4 py-3 hover:bg-[rgba(77,124,254,0.1)] rounded">About</a>
-              <Link href="/register" className="text-[14px] text-white px-4 py-3 bg-[#4d7cfe] rounded font-semibold hover:bg-[#5d8cff]">Get Started</Link>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      {/* ═══ HERO SECTION ══════════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[radial-gradient(ellipse_at_30%_0%,#1a0a2e_0%,#0a0a1a_60%,#0d1020_100%)] px-4 pt-12 pb-10">
-        {/* Label Pill */}
-        <div className="flex justify-center mb-5">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[rgba(77,124,254,0.1)] border border-[rgba(77,124,254,0.2)] rounded-full">
-            <span className="w-1.5 h-1.5 bg-[#0ecb81] rounded-full animate-pulse" />
-            <span className="text-[11px] text-[#8b949e]">India's #1 Decentralized P2P Exchange</span>
-          </div>
-        </div>
-
-        {/* Headline */}
-        <h1 className="text-[32px] font-bold text-[#f0f6fc] text-center leading-[1.1] mb-1">
-          Buy &amp; Sell USDT
-        </h1>
-
-        {/* Subheadline */}
-        <h2 className="text-[26px] font-semibold text-[#4d7cfe] text-center mb-3.5">
-          Get INR directly in your bank
-        </h2>
-
-        {/* Body Text */}
-        <p className="text-[13px] text-[#8b949e] text-center leading-[1.6] max-w-[320px] mx-auto mb-6">
-          Trade USDT peer-to-peer with instant bank transfers, zero hidden fees, and the best rates in India.
-        </p>
-
-        {/* CTA Buttons - Stacked on mobile */}
-        <div className="flex flex-col gap-3 mb-4">
-          <Link
-            href="/register"
-            className="w-full h-12 bg-[#4d7cfe] text-white text-[15px] font-semibold rounded-full flex items-center justify-center gap-2 hover:shadow-[0_8px_16px_rgba(77,124,254,0.4)] hover:bg-[#5d8cff] transition-all duration-300 active:scale-95"
-          >
-            Get Started 🚀
-          </Link>
-          <Link
-            href="/about"
-            className="w-full h-12 bg-transparent border-2 border-[#4d7cfe] text-[#4d7cfe] text-[15px] font-medium rounded-full flex items-center justify-center gap-2 hover:bg-[rgba(77,124,254,0.05)] hover:border-[#5d8cff] transition-all duration-300 active:scale-95"
-          >
-            📚 Learn More
-          </Link>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="flex flex-wrap justify-center gap-3 mb-6 text-[11px] text-[#8b949e]">
-          <span>🔒 Non-custodial</span>
-          <span>✓ KYC Verified</span>
-          <span>⚡ Zero Fees</span>
-        </div>
-
-        {/* Live Rate Card */}
-        <div className="bg-[#13131f] border border-[rgba(255,255,255,0.08)] rounded-[12px] p-3.5 max-w-[320px] mx-auto">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] text-[#8b949e]">USDT / INR</span>
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-[#0ecb81] rounded-full animate-pulse" />
-              <span className="text-[11px] text-[#0ecb81]">Live</span>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-baseline mb-2.5">
-            <span className="text-[26px] font-bold text-white">₹{currentRate.toFixed(2)}</span>
-            <span className="text-[11px] bg-[rgba(14,203,129,0.1)] text-[#0ecb81] px-2 py-1 rounded">+0.29%</span>
-          </div>
-
-          <div className="border-t border-[rgba(255,255,255,0.06)] my-2.5" />
-
-          {/* Mini Order Book */}
-          <div className="space-y-0.5 text-[11px] font-mono">
-            <div className="flex justify-between text-[#f6465d]"><span>106.40</span><span>1,250</span></div>
-            <div className="flex justify-between text-[#f6465d]"><span>106.38</span><span>890</span></div>
-            <div className="flex justify-between text-[#f6465d]"><span>106.35</span><span>2,100</span></div>
-            <div className="text-center text-[#8b949e] py-1.5 text-[10px]">Spread ₹0.52</div>
-            <div className="flex justify-between text-[#0ecb81]"><span>106.32</span><span>1,800</span></div>
-            <div className="flex justify-between text-[#0ecb81]"><span>106.30</span><span>3,200</span></div>
-            <div className="flex justify-between text-[#0ecb81]"><span>106.28</span><span>950</span></div>
-          </div>
-
-          <div className="text-center mt-2.5 pt-2.5 border-t border-[rgba(255,255,255,0.06)]">
-            <Link href="/p2p" className="text-[11px] text-[#4d7cfe] hover:underline">
-              View full P2P market →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ STATS BAR ═════════════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[#13131f] border-t border-b border-[rgba(255,255,255,0.06)] px-4 py-4">
-        <div className="flex justify-between items-center gap-4">
-          <div className="text-center flex-1">
-            <div className="text-[18px] font-bold text-white">₹19cr</div>
-            <div className="text-[11px] text-[#8b949e]">Volume</div>
-          </div>
-          <div className="text-center flex-1">
-            <div className="text-[18px] font-bold text-white">456</div>
-            <div className="text-[11px] text-[#8b949e]">Traders</div>
-          </div>
-          <div className="text-center flex-1">
-            <div className="text-[18px] font-bold text-white">2390</div>
-            <div className="text-[11px] text-[#8b949e]">Trades</div>
-          </div>
-        </div>
-        <div className="text-[10px] text-[#8b949e] text-right mt-2">Updated live</div>
-      </section>
-
-      {/* ═══ WHY SWAPEASE ══════════════════════════════════════════════ */}
-      <section id="features" className="relative z-10 bg-[#0a0a1a] px-4 py-10">
-        <p className="text-[10px] text-[#8b949e] uppercase tracking-[2px] mb-2">WHY SWAPEASE</p>
-        <h2 className="text-[20px] font-bold text-white mb-1.5">Built for serious traders</h2>
-        <p className="text-[13px] text-[#8b949e] mb-5">Everything you need to trade USDT safely</p>
-
-        {/* 2-Column Grid */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {FEATURES.map((feature, i) => (
-            <div key={i} className="bg-[#13131f] border border-[rgba(255,255,255,0.06)] rounded-[10px] p-3 hover:border-[rgba(77,124,254,0.3)] transition-all hover:scale-105">
-              <feature.icon size={18} className="text-[#4d7cfe] mb-2" />
-              <h3 className="text-[12px] font-semibold text-white mb-1">{feature.title}</h3>
-              <p className="text-[11px] text-[#8b949e] leading-[1.4]">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ HOW P2P WORKS ════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative z-10 bg-[#0d0d1a] border-t border-[rgba(255,255,255,0.04)] px-4 py-10">
-        <h2 className="text-[20px] font-bold text-white text-center mb-7">How P2P works</h2>
-
-        {/* Vertical Steps */}
-        <div className="space-y-8">
-          {STEPS.map((step, i) => (
-            <div key={i} className="flex gap-4">
-              {/* Left: Step Indicator */}
-              <div className="flex flex-col items-center">
-                <div className="w-8 h-8 bg-[rgba(77,124,254,0.15)] border border-[rgba(77,124,254,0.3)] rounded-full flex items-center justify-center">
-                  <span className="text-[12px] font-bold text-[#4d7cfe]">{step.num}</span>
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div className="w-[1px] h-10 bg-[rgba(77,124,254,0.2)] mt-2" />
-                )}
-              </div>
-
-              {/* Right: Content */}
-              <div className="flex-1 pt-1">
-                <h3 className="text-[14px] font-semibold text-white mb-1">{step.title}</h3>
-                <p className="text-[12px] text-[#8b949e] leading-[1.5]">{step.desc}</p>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center px-4 py-8 relative z-10">
+        <div className="w-full max-w-[390px] mx-auto">
+          {/* Hero Section - Centered */}
+          <div className="text-center">
+            {/* Logo */}
+            <div className="fade-in-up mb-5">
+              <div className="inline-flex items-center gap-1">
+                <Image
+                  src="/logo.png"
+                  alt="SwapEase"
+                  width={80}
+                  height={80}
+                  className="rounded-xl"
+                />
+                <span className="text-white font-bold text-2xl">SwapEase</span>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ═══ TESTIMONIALS ══════════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[#0a0a1a] px-4 py-10">
-        <h2 className="text-[18px] font-bold text-white text-center mb-5">Trusted by traders</h2>
+            {/* Live Rate Pill */}
+            <div className="fade-in-up delay-100 mb-5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-full">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                </span>
+                <span className="text-white text-xs font-medium">
+                  Live <span className="text-primary font-bold">₹{currentRate.toFixed(2)}/USDT</span>
+                </span>
+              </div>
+            </div>
 
-        <div className="space-y-3">
-          {TESTIMONIALS.map((testimonial, i) => (
-            <div key={i} className="bg-[#13131f] border border-[rgba(255,255,255,0.06)] rounded-[10px] p-3.5">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-start gap-2.5">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold ${getInitialsBgColor(testimonial.initials)}`}>
-                    {testimonial.initials}
+            {/* Hero Text */}
+            <div className="fade-in-up delay-200 mb-3">
+              <h1 className="text-[24px] font-bold text-white leading-tight">
+                Buy &amp; Sell USDT
+              </h1>
+              <p className="text-[20px] font-semibold text-primary">
+                Get INR Instantly
+              </p>
+            </div>
+
+            {/* Subtext */}
+            <p className="fade-in-up delay-300 text-[11px] text-muted-foreground mb-4 px-3">
+              India&apos;s most trusted P2P platform for instant USDT to INR conversion
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="fade-in-up delay-400 flex gap-2 mb-6 px-3">
+              <Link
+                href="/register"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary hover:bg-[#5d8cff] text-white text-sm font-semibold rounded-full transition-all"
+              >
+                Get Started
+              </Link>
+              <Link
+                href="/learn-more"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-transparent border border-white/30 hover:border-white/50 hover:bg-white/5 text-white text-sm font-semibold rounded-full transition-all"
+              >
+                Learn More
+              </Link>
+            </div>
+
+            {/* Feature Tags - Scrolling */}
+            <div className="fade-in-up delay-500 overflow-hidden mb-8">
+              <div className="flex gap-2 features-scroll whitespace-nowrap">
+                {[...FEATURES, ...FEATURES].map((feature, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-card border border-border rounded-full text-[10px] text-muted-foreground"
+                  >
+                    {feature === "Fast" && <Zap className="size-2.5 text-primary" />}
+                    {feature === "Secure" && <Shield className="size-2.5 text-primary" />}
+                    {feature === "Zero Fee" && <Percent className="size-2.5 text-primary" />}
+                    {feature === "Best Rate" && <TrendingUp className="size-2.5 text-primary" />}
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="fade-in-up delay-500 grid grid-cols-3 gap-2 px-3 mb-10">
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">50K+</p>
+                <p className="text-[10px] text-muted-foreground">Users</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">₹100Cr+</p>
+                <p className="text-[10px] text-muted-foreground">Volume</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">99.9%</p>
+                <p className="text-[10px] text-muted-foreground">Success</p>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 1 — Why Decentralized */}
+          <div
+            id="why-different"
+            ref={setSectionRef("why-different")}
+            className={`mb-8 transition-all duration-700 ${isVisible("why-different") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <div className="p-4 bg-card rounded-xl border border-border relative overflow-hidden">
+              {/* Purple glow border effect */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8b5cf6]/20 via-transparent to-[#4d7cfe]/20 pointer-events-none" />
+              
+              <h2 className="text-[15px] font-bold text-white mb-1 relative">Why SwapEase is Different?</h2>
+              <p className="text-[11px] text-primary mb-4 relative">
+                Fully decentralized — no middlemen, just P2P freedom
+              </p>
+
+              <div className="grid gap-2 relative">
+                {[
+                  { icon: Link2, title: "Truly Decentralized", desc: "No central authority. You control your funds." },
+                  { icon: Wallet, title: "Non-Custodial", desc: "Direct wallet-to-wallet trades." },
+                  { icon: Clock, title: "Instant Settlement", desc: "Trades settle in minutes." },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className="p-3 bg-[#1a1a2c] rounded-lg border-t-2 border-t-primary"
+                  >
+                    <div className="flex items-start gap-2">
+                      <item.icon className="size-4 text-primary mt-0.5" />
+                      <div>
+                        <p className="text-[12px] font-semibold text-white">{item.title}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{item.desc}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[13px] font-bold text-white">{testimonial.name}</div>
-                    <div className="text-[11px] text-[#8b949e]">{testimonial.location}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2 — How It Works */}
+          <div
+            id="how-it-works"
+            ref={setSectionRef("how-it-works")}
+            className={`mb-8 transition-all duration-700 ${isVisible("how-it-works") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <h2 className="text-[15px] font-bold text-white text-center mb-4">How It Works</h2>
+            
+            <div className="relative">
+              {/* Dotted line connector */}
+              <div className="absolute top-6 left-[12%] right-[12%] h-0.5 border-t-2 border-dashed border-primary/30 z-0" />
+              
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {[
+                  { icon: User, step: 1, title: "Create Account", desc: "Register in 60 sec" },
+                  { icon: ArrowLeftRight, step: 2, title: "Place Order", desc: "Buy or Sell USDT" },
+                  { icon: Landmark, step: 3, title: "Get Paid", desc: "INR via UPI/IMPS" },
+                ].map((item) => (
+                  <div
+                    key={item.step}
+                    className="flex-shrink-0 w-[110px] text-center relative z-10"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center mx-auto mb-2">
+                      <span className="text-white font-bold text-[11px]">{item.step}</span>
+                    </div>
+                    <div className="p-2 bg-card rounded-lg border border-border">
+                      <item.icon className="size-4 text-primary mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-white mb-0.5">{item.title}</p>
+                      <p className="text-[9px] text-muted-foreground leading-tight">{item.desc}</p>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3 — Decentralized Advantage Banner */}
+          <div
+            id="advantage-banner"
+            ref={setSectionRef("advantage-banner")}
+            className={`mb-8 transition-all duration-700 ${isVisible("advantage-banner") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <div className="relative p-4 bg-card rounded-xl overflow-hidden">
+              {/* Animated gradient border */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#4d7cfe] via-[#8b5cf6] to-[#4d7cfe] p-[1px] animate-pulse">
+                <div className="w-full h-full bg-card rounded-xl" />
+              </div>
+              
+              <div className="relative text-center">
+                <h3 className="text-[14px] font-bold text-white mb-1">
+                  No KYC. No Limits. No Middlemen.
+                </h3>
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  SwapEase runs on smart contracts. Secured by blockchain.
+                </p>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-green-400">
+                    <CheckCircle2 className="size-3" />
+                    Smart Contract
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] text-green-400">
+                    <CheckCircle2 className="size-3" />
+                    Blockchain Verified
+                  </span>
                 </div>
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} size={14} className="fill-[#4d7cfe] text-[#4d7cfe]" />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 4 — Live Trades Feed */}
+          <div
+            id="live-trades"
+            ref={setSectionRef("live-trades")}
+            className={`mb-8 transition-all duration-700 ${isVisible("live-trades") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[14px] font-bold text-white">Live Trades</h2>
+              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                </span>
+                Real-time
+              </span>
+            </div>
+
+            <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <div className="h-[180px] overflow-hidden relative">
+                <div className="live-trades-scroll">
+                  {[...LIVE_TRADES, ...LIVE_TRADES].map((trade, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 px-3 py-2 border-b border-border/50 h-[30px]"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-[8px] font-bold">{trade.initials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] text-white truncate">
+                          <span className="font-medium">{trade.name}</span>{" "}
+                          <span className={trade.action === "bought" ? "text-green-400" : "text-primary"}>
+                            {trade.action}
+                          </span>{" "}
+                          <span className="font-semibold">{trade.amount} USDT</span>
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-[9px] text-muted-foreground">₹{trade.inr.toLocaleString()}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
-              <p className="text-[12px] text-[#8b949e] leading-[1.5]">"{testimonial.quote}"</p>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
 
-      {/* ═══ SECURITY ══════════════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[#0d0d1a] border-t border-[rgba(255,255,255,0.04)] px-4 py-10">
-        <h2 className="text-[18px] font-bold text-white text-center mb-1.5">Your security is our priority</h2>
-        <p className="text-[12px] text-[#8b949e] text-center mb-5">Multiple layers of protection</p>
-
-        {/* 2x2 Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {SECURITY_POINTS.map((point, i) => (
-            <div key={i} className="bg-[#13131f] border border-[rgba(255,255,255,0.06)] rounded-[8px] p-3">
-              <div className="text-[20px] mb-2">{point.icon}</div>
-              <h3 className="text-[12px] font-bold text-white mb-1">{point.title}</h3>
-              <p className="text-[11px] text-[#8b949e] leading-[1.4]">{point.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ SUPPORTED NETWORKS ════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[#0a0a1a] px-4 py-8 text-center">
-        <p className="text-[10px] text-[#8b949e] uppercase tracking-[2px] mb-4">SUPPORTED NETWORKS</p>
-
-        <div className="flex justify-center gap-2 mb-3 flex-wrap">
-          {NETWORKS.map((network) => (
-            <div key={network.type} className="flex items-center gap-1.5 px-2.5 py-2 bg-[#13131f] border border-[rgba(255,255,255,0.08)] rounded-[6px]">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: network.color }} />
-              <span className="text-[12px] font-bold text-white">{network.name}</span>
-              <span className="text-[10px] text-[#8b949e]">{network.type}</span>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-[11px] text-[#f0b90b]">⚠ Always verify network before sending</p>
-      </section>
-
-      {/* ═══ FAQ ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[#0d0d1a] px-4 py-10">
-        <h2 className="text-[18px] font-bold text-white mb-5">Frequently asked</h2>
-
-        <div className="space-y-2">
-          {FAQS.map((faq, i) => (
-            <div key={i} className="bg-[#13131f] border border-[rgba(255,255,255,0.06)] rounded-[8px] overflow-hidden">
-              <button
-                onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                className="w-full px-3.5 py-3.5 flex justify-between items-center text-left hover:bg-[rgba(77,124,254,0.05)] transition-all"
-              >
-                <span className="text-[13px] font-semibold text-white">{faq.q}</span>
-                <ChevronDown
-                  size={16}
-                  className={`text-[#4d7cfe] transition-transform ${expandedFaq === i ? "rotate-180" : ""}`}
-                />
-              </button>
-              {expandedFaq === i && (
-                <div className="px-3.5 py-3 border-t border-[rgba(255,255,255,0.06)] bg-[rgba(77,124,254,0.05)]">
-                  <p className="text-[12px] text-[#8b949e] leading-[1.6]">{faq.a}</p>
+          {/* SECTION 5 — Supported Networks */}
+          <div
+            id="networks"
+            ref={setSectionRef("networks")}
+            className={`mb-8 transition-all duration-700 ${isVisible("networks") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <h2 className="text-[13px] font-bold text-white text-center mb-3">Supported Networks</h2>
+            
+            <div className="flex items-center justify-center gap-1.5 flex-wrap mb-2">
+              {NETWORKS.map((network) => (
+                <div
+                  key={network.type}
+                  className="inline-flex items-center gap-1.5 px-2 py-1.5 bg-card border border-border rounded-full"
+                >
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#4d7cfe] to-[#8b5cf6] flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">{network.icon}</span>
+                  </div>
+                  <span className="text-[10px] text-white">{network.name}</span>
+                  <span className="text-[9px] text-muted-foreground">({network.type})</span>
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+            
+            <p className="text-center text-[9px] text-yellow-500/80">
+              Always send USDT on correct network
+            </p>
+          </div>
 
-      {/* ═══ CTA SECTION ═══════════════════════════════════════════════ */}
-      <section className="relative z-10 bg-[#13131f] border-t border-[rgba(255,255,255,0.06)] px-4 py-12 text-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(77,124,254,0.1)] border border-[rgba(77,124,254,0.2)] rounded-full mb-4">
-          <span className="text-[11px] text-[#4d7cfe]">🇮🇳 Made for India</span>
-        </div>
-
-        <h2 className="text-[24px] font-bold text-white mb-2">Ready to trade?</h2>
-        <p className="text-[13px] text-[#8b949e] mb-6">
-          Join SwapEase — India's trusted decentralized P2P USDT exchange
-        </p>
-
-        <div className="flex flex-col gap-2.5">
-          <Link
-            href="/register"
-            className="h-12 bg-gradient-to-r from-[#4d7cfe] to-[#6b94ff] text-white text-[15px] font-semibold rounded-full flex items-center justify-center hover:shadow-lg transition-all"
+          {/* SECTION 6 — CTA Bottom Banner */}
+          <div
+            id="cta-banner"
+            ref={setSectionRef("cta-banner")}
+            className={`mb-6 transition-all duration-700 ${isVisible("cta-banner") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
           >
-            Start Trading
-          </Link>
-          <Link
-            href="/p2p"
-            className="h-12 bg-transparent border border-[rgba(255,255,255,0.15)] text-white text-[15px] font-medium rounded-full flex items-center justify-center hover:bg-[rgba(255,255,255,0.05)] transition-all"
-          >
-            View P2P Market
-          </Link>
-        </div>
-      </section>
-
-      {/* ═══ FOOTER ════════════════════════════════════════════════════ */}
-      <footer className="relative z-10 bg-[#0a0a1a] border-t border-[rgba(255,255,255,0.06)] px-4 py-8">
-        {/* Top Row */}
-        <div className="flex flex-col gap-4 mb-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-[#4d7cfe] to-[#6b94ff] rounded-[8px] flex items-center justify-center">
-              <span className="text-white text-[11px] font-bold">SE</span>
+            <div className="p-4 bg-card rounded-xl border border-border relative overflow-hidden text-center">
+              {/* Blue glow effect */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(77,124,254,0.15)_0%,transparent_70%)] pointer-events-none" />
+              
+              <h3 className="text-[16px] font-bold text-white mb-1 relative">Ready to Trade?</h3>
+              <p className="text-[10px] text-muted-foreground mb-4 relative">
+                Join 50,000+ traders on India&apos;s most trusted exchange
+              </p>
+              
+              <div className="flex gap-2 justify-center relative">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-[#5d8cff] text-white text-[12px] font-semibold rounded-full transition-colors"
+                >
+                  Get Started
+                  <ExternalLink className="size-3" />
+                </Link>
+                <Link
+                  href="/learn-more"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-transparent border border-white/20 hover:border-white/40 text-white text-[12px] font-semibold rounded-full transition-colors"
+                >
+                  Learn More
+                </Link>
+              </div>
             </div>
-            <span className="text-white text-[15px] font-semibold">SwapEase</span>
-          </Link>
-
-          <div className="flex gap-4 text-[11px] text-[#8b949e]">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <span>·</span>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <span>·</span>
-            <Link href="/support" className="hover:text-white transition-colors">Support</Link>
           </div>
         </div>
+      </main>
 
-        {/* Disclaimer */}
-        <p className="text-[11px] text-[#8b949e] leading-[1.6] mb-6">
-          SwapEase is a peer-to-peer USDT exchange. We do not provide financial advice. Trade at your own risk.
-        </p>
+      {/* Footer */}
+      <footer className="py-8 px-4 bg-[#0d0d1a] border-t border-border">
+        <div className="w-full max-w-[390px] mx-auto">
+          {/* Logo and Tagline */}
+          <div className="flex items-center gap-2 mb-4 justify-center">
+            <Image
+              src="/logo.png"
+              alt="SwapEase"
+              width={64}
+              height={64}
+              className="rounded-xl"
+            />
+            <span className="text-white font-bold">SwapEase</span>
+          </div>
+          <p className="text-center text-xs text-muted-foreground mb-6">
+            Decentralized P2P USDT Exchange
+          </p>
 
-        {/* Social & Bottom */}
-        <div className="flex justify-center gap-2 mb-4">
-          <a href="#" className="w-8 h-8 rounded-full bg-[#13131f] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:bg-[rgba(77,124,254,0.1)] transition-all">
-            <span className="text-[14px]">f</span>
-          </a>
-          <a href="#" className="w-8 h-8 rounded-full bg-[#13131f] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-white hover:bg-[rgba(77,124,254,0.1)] transition-all">
-            <span className="text-[14px]">𝕏</span>
-          </a>
-        </div>
+          {/* Links */}
+          <div className="flex items-center justify-center gap-6 mb-6 flex-wrap">
+            {["Home", "Calculator", "Support", "Terms", "Privacy"].map((link) => (
+              <Link
+                key={link}
+                href={link === "Home" ? "/" : `/${link.toLowerCase()}`}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                {link}
+              </Link>
+            ))}
+          </div>
 
-        <div className="flex justify-between text-[10px] text-[#484f58] pt-4 border-t border-[rgba(255,255,255,0.04)]">
-          <span>© 2025 SwapEase</span>
-          <span>Built in India 🇮🇳</span>
+          {/* Social Icons */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <a
+              href="https://t.me/swapease"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center hover:border-primary transition-colors"
+            >
+              <svg className="size-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
+              </svg>
+            </a>
+            <a
+              href="https://twitter.com/swapease"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center hover:border-primary transition-colors"
+            >
+              <svg className="size-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+          </div>
+
+          {/* Copyright */}
+          <p className="text-center text-[11px] text-muted-foreground/60">
+            © 2025 SwapEase. Decentralized &amp; Secured by Blockchain.
+          </p>
         </div>
       </footer>
-
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }

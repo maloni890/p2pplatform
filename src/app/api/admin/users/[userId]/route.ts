@@ -1,13 +1,12 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const { userId } = await params;
 

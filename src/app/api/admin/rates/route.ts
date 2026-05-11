@@ -1,10 +1,9 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET() {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const rates = await sql`SELECT * FROM platform_rates ORDER BY updated_at DESC LIMIT 1`;
     
@@ -35,7 +34,6 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { buyRate, sellRate, vipBuyRate, vipSellRate, platformFee, minAmount, maxAmount, adminId, adminName } = body;
@@ -83,7 +81,6 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     // Get rate history
     const { searchParams } = new URL(request.url);

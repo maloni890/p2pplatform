@@ -1,11 +1,10 @@
 import { neon } from "@neondatabase/serverless";
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+const sql = neon(process.env.DATABASE_URL!);
 
 // GET - Fetch all tickets for admin
 export async function GET(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
@@ -100,7 +99,6 @@ export async function GET(request: NextRequest) {
 
 // PATCH - Update ticket (reply, change status)
 export async function PATCH(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { ticketId, status, adminReply, repliedBy, priority } = body;

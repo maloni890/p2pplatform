@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
 
-export const runtime = "edge";
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(request: NextRequest) {
-  const sql = neon(process.env.DATABASE_URL!);
   try {
     const body = await request.json();
     const { identifier, email, phone, password } = body;

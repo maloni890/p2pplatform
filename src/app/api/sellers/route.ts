@@ -39,20 +39,7 @@ export async function GET(request: Request) {
       LIMIT 20
     `;
 
-    // Ensure all numeric fields are properly typed as numbers
-    const formattedSellers = sellers.map((seller: any) => ({
-      ...seller,
-      completion_rate: Number(seller.completion_rate) || 0,
-      rate: Number(seller.rate) || 0,
-      available_usdt: Number(seller.available_usdt) || 0,
-      total_trades: Number(seller.total_trades) || 0,
-      avg_response_time: Number(seller.avg_response_time) || 0,
-      min_limit: Number(seller.min_limit) || 0,
-      max_limit: Number(seller.max_limit) || 0,
-      rating: Number(seller.rating) || 0,
-    }));
-
-    return NextResponse.json({ sellers: formattedSellers, success: true });
+    return NextResponse.json({ sellers, success: true });
   } catch (error) {
     console.error("Error fetching sellers:", error);
     return NextResponse.json(

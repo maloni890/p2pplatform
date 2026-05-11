@@ -335,7 +335,7 @@ export default function BuyPage() {
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
           <button
-            onClick={() => (step > 1 ? setStep(step - 1) : router.push("/p2p"))}
+            onClick={() => (step > 1 ? setStep(step - 1) : router.push("/dashboard"))}
             className="p-1.5 rounded-lg hover:bg-surface transition-colors"
           >
             <ArrowLeft className="size-4 text-muted-foreground" />

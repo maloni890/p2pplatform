@@ -48,7 +48,7 @@ export default function CreateOfferPage() {
         max_limit_inr: parseFloat(form.max_limit_inr),
       });
       toast.success("Offer created successfully!");
-      router.push("/p2p");
+      router.push("/dashboard");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } };
       toast.error(axiosErr?.response?.data?.detail || "Failed to create offer");
@@ -58,11 +58,7 @@ export default function CreateOfferPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative">
-      {/* Background glows */}
-      <div className="fixed top-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(138,43,226,0.12)_0%,transparent_70%)] pointer-events-none" />
-      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(77,124,254,0.12)_0%,transparent_70%)] pointer-events-none" />
-
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8 w-full" data-testid="create-offer-page">
         <h1 className="font-sans text-3xl font-bold text-foreground mb-2">

@@ -141,27 +141,6 @@ interface Rates {
   max_trade_amount: number;
 }
 
-interface Ad {
-  id: string;
-  seller_id: string;
-  type: string;
-  price_type: string;
-  price: number;
-  total_amount: number;
-  available_amount: number;
-  min_limit: number;
-  max_limit: number;
-  payment_methods: string[];
-  time_limit: number;
-  auto_reply: string | null;
-  terms: string | null;
-  is_active: boolean;
-  created_at: string;
-  seller_name?: string;
-  total_trades?: number;
-  completion_rate?: number;
-}
-
 interface SupportTicket {
   id: string;
   ticket_number: string;
@@ -190,7 +169,6 @@ interface SupportCounts {
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Orders", icon: ShoppingCart },
-  { id: "ads", label: "P2P Ads", icon: ShoppingCart },
   { id: "users", label: "Users", icon: Users },
   { id: "kyc", label: "KYC Requests", icon: Shield },
   { id: "sellers", label: "Sellers", icon: UserCheck },
@@ -221,7 +199,6 @@ export default function AdminDashboard() {
   // Data states
   const [stats, setStats] = useState<Stats | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [ads, setAds] = useState<Ad[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [kycApplications, setKycApplications] = useState<KycApplication[]>([]);
   const [sellers, setSellers] = useState<Seller[]>([]);
@@ -231,7 +208,6 @@ export default function AdminDashboard() {
 
   // Filter states
   const [orderFilter, setOrderFilter] = useState({ status: "all", type: "all" });
-  const [adFilter, setAdFilter] = useState({ status: "all", type: "all" });
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [kycFilter, setKycFilter] = useState("pending");
@@ -289,12 +265,6 @@ export default function AdminDashboard() {
           const ordersRes = await fetch(`/api/admin/orders?status=${orderFilter.status}&type=${orderFilter.type}&page=${orderPage}`);
           const ordersData = await ordersRes.json();
           if (ordersData.success) setOrders(ordersData.orders);
-          break;
-
-        case "ads":
-          const adsRes = await fetch(`/api/admin/ads?status=${adFilter.status}&type=${adFilter.type}`);
-          const adsData = await adsRes.json();
-          if (adsData.success) setAds(adsData.ads);
           break;
 
         case "users":
@@ -424,20 +394,6 @@ export default function AdminDashboard() {
       if (data.success) fetchData();
     } catch (error) {
       console.error("Seller action failed:", error);
-    }
-  };
-
-  const handleAdAction = async (adId: string, action: string) => {
-    try {
-      const res = await fetch("/api/admin/ads", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adId, action }),
-      });
-      const data = await res.json();
-      if (data.success) fetchData();
-    } catch (error) {
-      console.error("Ad action failed:", error);
     }
   };
 
